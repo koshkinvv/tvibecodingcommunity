@@ -15,10 +15,8 @@ export default function LoginPage() {
     }
   }, [user, isLoading, setLocation]);
 
-  // Special mock login function for demo purposes
-  const mockLogin = () => {
-    window.location.href = '/api/mock-login';
-  };
+  // Login with GitHub
+  // Function is provided by useAuth hook
 
   return (
     <div className="min-h-full flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -40,14 +38,6 @@ export default function LoginPage() {
                 <FaGithub className="h-5 w-5 text-gray-300 group-hover:text-gray-400" />
               </span>
               Sign in with GitHub
-            </Button>
-            
-            <Button
-              onClick={mockLogin}
-              variant="outline"
-              className="group relative w-full flex justify-center py-2 px-4 border border-gray-300 text-sm font-medium rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
-            >
-              Demo Login (No GitHub Required)
             </Button>
           </div>
           <div className="flex items-center justify-center">
