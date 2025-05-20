@@ -12,9 +12,10 @@ export function setupAuth(app: express.Express) {
   const MemoryStoreSession = MemoryStore(session);
   
   // Configure passport with GitHub strategy
-  // Production callback URL is used by default
-  const productionCallbackURL = 'https://vibe-code-tracker.replit.app/api/auth/github/callback';
-  const callbackURL = process.env.GITHUB_CALLBACK_URL || productionCallbackURL;
+  // Match the URL configured in GitHub OAuth settings as seen in the screenshot
+  const callbackURL = 'https://vibe-code-tracker.replit.app/api/auth/github/callback';
+  
+  console.log('Using callback URL:', callbackURL);
   
   console.log('GitHub OAuth Configuration:');
   console.log('Client ID:', process.env.GITHUB_CLIENT_ID ? 'Set' : 'Not set');
