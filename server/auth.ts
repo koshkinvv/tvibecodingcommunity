@@ -12,12 +12,19 @@ export function setupAuth(app: express.Express) {
   const MemoryStoreSession = MemoryStore(session);
   
   // Configure passport with GitHub strategy
+  console.log('GitHub OAuth Configuration:');
+  console.log('Client ID:', process.env.GITHUB_CLIENT_ID ? 'Set' : 'Not set');
+  console.log('Client Secret:', process.env.GITHUB_CLIENT_SECRET ? 'Set' : 'Not set');
+  console.log('Callback URL:', process.env.GITHUB_CALLBACK_URL || 'http://localhost:5000/api/auth/github/callback');
+  
   passport.use(new GitHubStrategy({
     clientID: process.env.GITHUB_CLIENT_ID || 'mock_client_id',
     clientSecret: process.env.GITHUB_CLIENT_SECRET || 'mock_client_secret',
     callbackURL: process.env.GITHUB_CALLBACK_URL || 'http://localhost:5000/api/auth/github/callback',
     scope: ['user:email', 'read:user', 'repo']
   }, async (accessToken, refreshToken, profile, done) => {
+    console.log('GitHub OAuth callback received');
+    console.log('Profile:', profile.username);
     try {
       // Parse and validate GitHub user data
       const githubData = {
