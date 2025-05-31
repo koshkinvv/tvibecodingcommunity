@@ -41,6 +41,30 @@ export class GitHubClient {
     return response.json();
   }
 
+  async getUserRepositories() {
+    if (!this.token) {
+      throw new Error('Authentication token required');
+    }
+    
+    const response = await fetch(`${this.baseUrl}/user/repos?sort=updated&per_page=100`, {
+      headers: this.getHeaders()
+    });
+    
+    if (!response.ok) {
+      throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
+    }
+    
+    const repos = await response.json();
+    return repos.map((repo: any) => ({
+      id: repo.id,
+      name: repo.name,
+      fullName: repo.full_name,
+      description: repo.description,
+      private: repo.private,
+      updatedAt: repo.updated_at
+    }));
+  }
+
   async getRepository(owner: string, repo: string) {
     const response = await fetch(`${this.baseUrl}/repos/${owner}/${repo}`, {
       headers: this.getHeaders()

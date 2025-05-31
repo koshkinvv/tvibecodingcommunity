@@ -211,6 +211,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to fetch repositories" });
     }
   });
+
+  // Get user's GitHub repositories
+  app.get("/api/github/repositories", auth.isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as any;
+      
+      if (!user.githubToken) {
+        return res.status(401).json({ error: "GitHub token not available" });
+      }
+      
+      githubClient.setToken(user.githubToken);
+      const repositories = await githubClient.getUserRepositories();
+      
+      res.json(repositories);
+    } catch (error) {
+      console.error("Error fetching GitHub repositories:", error);
+      res.status(500).json({ error: "Failed to fetch GitHub repositories" });
+    }
+  });
   
   // Add repository
   app.post("/api/repositories", auth.isAuthenticated, async (req, res) => {

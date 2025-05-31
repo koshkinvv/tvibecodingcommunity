@@ -40,6 +40,7 @@ type AddRepositoryFormValues = z.infer<typeof addRepositorySchema>;
 
 export function RepositoryList({ userId, readOnly = false }: RepositoryListProps) {
   const [repositoryToDelete, setRepositoryToDelete] = useState<Repository | null>(null);
+  const [showGitHubRepos, setShowGitHubRepos] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -54,6 +55,12 @@ export function RepositoryList({ userId, readOnly = false }: RepositoryListProps
   // Query to fetch repositories
   const { data: repositories, isLoading } = useQuery<Repository[]>({
     queryKey: [userId ? `/api/admin/users/${userId}/repositories` : '/api/repositories'],
+  });
+
+  // Query to fetch GitHub repositories
+  const { data: githubRepos, isLoading: isLoadingGitHub } = useQuery({
+    queryKey: ['/api/github/repositories'],
+    enabled: showGitHubRepos,
   });
 
   // Mutation to delete repository
@@ -201,7 +208,51 @@ export function RepositoryList({ userId, readOnly = false }: RepositoryListProps
       {!readOnly && (
         <Card className="bg-white shadow">
           <CardContent className="px-4 py-5 sm:p-6">
-            <h3 className="text-lg leading-6 font-medium text-gray-900">Add a new repository</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg leading-6 font-medium text-gray-900">Add a new repository</h3>
+              <Button
+                variant="outline"
+                onClick={() => setShowGitHubRepos(!showGitHubRepos)}
+                disabled={isLoadingGitHub}
+              >
+                {isLoadingGitHub ? 'Loading...' : showGitHubRepos ? 'Hide GitHub Repos' : 'Load from GitHub'}
+              </Button>
+            </div>
+
+            {/* GitHub Repositories List */}
+            {showGitHubRepos && (
+              <div className="mt-4 mb-6">
+                <h4 className="text-md font-medium text-gray-700 mb-3">Your GitHub Repositories</h4>
+                {isLoadingGitHub ? (
+                  <p className="text-gray-500">Loading your repositories...</p>
+                ) : githubRepos && githubRepos.length > 0 ? (
+                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                    {githubRepos.map((repo: any) => (
+                      <div key={repo.id} className="flex items-center justify-between p-2 border rounded-md">
+                        <div className="flex-1">
+                          <p className="font-medium text-sm">{repo.fullName}</p>
+                          {repo.description && (
+                            <p className="text-xs text-gray-500">{repo.description}</p>
+                          )}
+                        </div>
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            form.setValue('fullName', repo.fullName);
+                            form.setValue('name', repo.name);
+                          }}
+                        >
+                          Use
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500">No repositories found or failed to load.</p>
+                )}
+              </div>
+            )}
+
             <div className="mt-4 max-w-xl">
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
