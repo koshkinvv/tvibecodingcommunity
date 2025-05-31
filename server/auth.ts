@@ -60,6 +60,10 @@ export function setupAuth(app: express.Express) {
           githubToken: accessToken
         });
       } else {
+        // Check if this is the first user (make them admin)
+        const existingUsers = await storage.getUsers();
+        const isFirstUser = existingUsers.length === 0;
+        
         // Create new user
         user = await storage.createUser({
           githubId: profile.id,
@@ -72,8 +76,12 @@ export function setupAuth(app: express.Express) {
           notificationPreference: 'email',
           onVacation: false,
           vacationUntil: null,
-          isAdmin: false
+          isAdmin: isFirstUser // First user becomes admin automatically
         });
+        
+        if (isFirstUser) {
+          console.log(`First user ${user.username} has been granted admin privileges`);
+        }
       }
       
       return done(null, user);
