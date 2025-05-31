@@ -4,6 +4,8 @@ import {
   type Repository, type InsertRepository,
   type WeeklyStat, type InsertWeeklyStat
 } from "@shared/schema";
+import { db } from "./db";
+import { eq, and, desc, gte, sql } from "drizzle-orm";
 
 // Storage interface
 export interface IStorage {
@@ -31,199 +33,175 @@ export interface IStorage {
   getWeeklyStatsByUser(userId: number): Promise<WeeklyStat[]>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private repositories: Map<number, Repository>;
-  private weeklyStats: Map<number, WeeklyStat>;
-  private currentUserId: number = 1;
-  private currentRepoId: number = 1;
-  private currentStatId: number = 1;
-
-  constructor() {
-    this.users = new Map();
-    this.repositories = new Map();
-    this.weeklyStats = new Map();
-  }
-
-  // User operations
+export class DatabaseStorage implements IStorage {
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
   }
 
   async getUserByGithubId(githubId: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.githubId === githubId
-    );
+    const [user] = await db.select().from(users).where(eq(users.githubId, githubId));
+    return user || undefined;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username
-    );
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
   }
 
   async getUsers(): Promise<User[]> {
-    return Array.from(this.users.values());
+    return await db.select().from(users);
   }
 
   async getActiveUsers(): Promise<User[]> {
-    const now = new Date();
-    const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
-    return Array.from(this.users.values()).filter(user => 
-      !user.onVacation && user.lastActive && new Date(user.lastActive) > twoWeeksAgo
-    );
+    return await db.select().from(users).where(eq(users.onVacation, false));
   }
 
-  async createUser(user: InsertUser): Promise<User> {
-    const id = this.currentUserId++;
-    const now = new Date();
-    // Ensure all required fields are present
-    const newUser: User = { 
-      ...user, 
-      id, 
-      createdAt: now, 
-      lastActive: now,
-      email: user.email || null,
-      name: user.name || null,
-      avatarUrl: user.avatarUrl || null,
-      githubToken: user.githubToken || null,
-      telegramId: user.telegramId || null,
-      notificationPreference: user.notificationPreference || 'email',
-      onVacation: user.onVacation || false,
-      vacationUntil: user.vacationUntil || null,
-      isAdmin: user.isAdmin || false
-    };
-    this.users.set(id, newUser);
-    return newUser;
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db.insert(users).values(insertUser).returning();
+    return user;
   }
 
   async updateUser(id: number, userData: Partial<User>): Promise<User | undefined> {
-    const existingUser = this.users.get(id);
-    if (!existingUser) return undefined;
-    
-    const updatedUser = { ...existingUser, ...userData };
-    this.users.set(id, updatedUser);
-    return updatedUser;
+    const [user] = await db.update(users).set(userData).where(eq(users.id, id)).returning();
+    return user || undefined;
   }
 
   async deleteUser(id: number): Promise<boolean> {
-    // Also delete associated repositories and stats
-    const userRepos = await this.getRepositoriesByUser(id);
-    for (const repo of userRepos) {
-      await this.deleteRepository(repo.id);
-    }
-    
-    return this.users.delete(id);
+    const result = await db.delete(users).where(eq(users.id, id));
+    return (result.rowCount ?? 0) > 0;
   }
 
   async getUsersWithInactiveRepos(daysThreshold: number): Promise<User[]> {
-    const now = new Date();
-    const thresholdDate = new Date(now.getTime() - daysThreshold * 24 * 60 * 60 * 1000);
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - daysThreshold);
     
-    const result: User[] = [];
-    for (const user of this.users.values()) {
-      if (user.onVacation) continue;
-      
-      const repos = await this.getRepositoriesByUser(user.id);
-      const hasInactiveRepo = repos.some(repo => 
-        !repo.lastCommitDate || new Date(repo.lastCommitDate) < thresholdDate
-      );
-      
-      if (hasInactiveRepo) {
-        result.push(user);
-      }
-    }
-    
-    return result;
+    const usersWithInactiveRepos = await db
+      .select({
+        id: users.id,
+        githubId: users.githubId,
+        username: users.username,
+        email: users.email,
+        name: users.name,
+        avatarUrl: users.avatarUrl,
+        githubToken: users.githubToken,
+        telegramId: users.telegramId,
+        notificationPreference: users.notificationPreference,
+        onVacation: users.onVacation,
+        vacationUntil: users.vacationUntil,
+        isAdmin: users.isAdmin,
+        lastActive: users.lastActive,
+        createdAt: users.createdAt,
+      })
+      .from(users)
+      .leftJoin(repositories, eq(users.id, repositories.userId))
+      .where(
+        and(
+          eq(users.onVacation, false),
+          repositories.lastCommitDate ? gte(repositories.lastCommitDate, cutoffDate) : sql`true`
+        )
+      )
+      .groupBy(users.id);
+
+    return usersWithInactiveRepos;
   }
 
-  // Repository operations
   async getRepository(id: number): Promise<Repository | undefined> {
-    return this.repositories.get(id);
+    const [repo] = await db.select().from(repositories).where(eq(repositories.id, id));
+    return repo || undefined;
   }
 
   async getRepositoriesByUser(userId: number): Promise<Repository[]> {
-    return Array.from(this.repositories.values()).filter(
-      (repo) => repo.userId === userId
-    );
+    return await db.select().from(repositories).where(eq(repositories.userId, userId));
   }
 
   async createRepository(repo: InsertRepository): Promise<Repository> {
-    const id = this.currentRepoId++;
-    const now = new Date();
-    const newRepo: Repository = { 
-      ...repo, 
-      id, 
-      createdAt: now, 
-      status: 'pending', 
-      lastCommitDate: null 
-    };
-    this.repositories.set(id, newRepo);
-    return newRepo;
+    const [repository] = await db.insert(repositories).values(repo).returning();
+    return repository;
   }
 
   async updateRepository(id: number, repoData: Partial<Repository>): Promise<Repository | undefined> {
-    const existingRepo = this.repositories.get(id);
-    if (!existingRepo) return undefined;
-    
-    const updatedRepo = { ...existingRepo, ...repoData };
-    this.repositories.set(id, updatedRepo);
-    return updatedRepo;
+    const [repo] = await db.update(repositories).set(repoData).where(eq(repositories.id, id)).returning();
+    return repo || undefined;
   }
 
   async deleteRepository(id: number): Promise<boolean> {
-    return this.repositories.delete(id);
+    const result = await db.delete(repositories).where(eq(repositories.id, id));
+    return (result.rowCount ?? 0) > 0;
   }
 
-  // Weekly stats operations
   async getCurrentViber(): Promise<User | undefined> {
     const currentWeek = this.getCurrentWeekIdentifier();
     
-    const viberStat = Array.from(this.weeklyStats.values()).find(
-      stat => stat.week === currentWeek && stat.isViber
-    );
-    
-    if (!viberStat) return undefined;
-    return this.getUser(viberStat.userId);
+    const [viber] = await db
+      .select({
+        id: users.id,
+        githubId: users.githubId,
+        username: users.username,
+        email: users.email,
+        name: users.name,
+        avatarUrl: users.avatarUrl,
+        githubToken: users.githubToken,
+        telegramId: users.telegramId,
+        notificationPreference: users.notificationPreference,
+        onVacation: users.onVacation,
+        vacationUntil: users.vacationUntil,
+        isAdmin: users.isAdmin,
+        lastActive: users.lastActive,
+        createdAt: users.createdAt,
+      })
+      .from(users)
+      .leftJoin(weeklyStats, eq(users.id, weeklyStats.userId))
+      .where(
+        and(
+          eq(weeklyStats.week, currentWeek),
+          eq(weeklyStats.isViber, true)
+        )
+      );
+
+    return viber || undefined;
   }
 
   async updateWeeklyStats(stat: InsertWeeklyStat): Promise<WeeklyStat> {
-    // Check if a stat for this user/week already exists
-    const existingStat = Array.from(this.weeklyStats.values()).find(
-      s => s.userId === stat.userId && s.week === stat.week
-    );
-    
+    const [existingStat] = await db
+      .select()
+      .from(weeklyStats)
+      .where(
+        and(
+          eq(weeklyStats.userId, stat.userId),
+          eq(weeklyStats.week, stat.week)
+        )
+      );
+
     if (existingStat) {
-      const updatedStat = { ...existingStat, ...stat };
-      this.weeklyStats.set(existingStat.id, updatedStat);
-      return updatedStat;
+      const [updated] = await db
+        .update(weeklyStats)
+        .set(stat)
+        .where(eq(weeklyStats.id, existingStat.id))
+        .returning();
+      return updated;
+    } else {
+      const [newStat] = await db.insert(weeklyStats).values(stat).returning();
+      return newStat;
     }
-    
-    // Create new stat
-    const id = this.currentStatId++;
-    const newStat: WeeklyStat = { ...stat, id };
-    this.weeklyStats.set(id, newStat);
-    return newStat;
   }
 
   async getWeeklyStatsByUser(userId: number): Promise<WeeklyStat[]> {
-    return Array.from(this.weeklyStats.values()).filter(
-      stat => stat.userId === userId
-    );
+    return await db
+      .select()
+      .from(weeklyStats)
+      .where(eq(weeklyStats.userId, userId))
+      .orderBy(desc(weeklyStats.week));
   }
 
-  // Helper method to get current week in YYYY-WW format
   private getCurrentWeekIdentifier(): string {
     const now = new Date();
     const year = now.getFullYear();
-    
-    // Calculate week number
-    const firstDayOfYear = new Date(year, 0, 1);
-    const pastDaysOfYear = (now.getTime() - firstDayOfYear.getTime()) / 86400000;
-    const weekNumber = Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
-    
-    return `${year}-${weekNumber.toString().padStart(2, '0')}`;
+    const startOfYear = new Date(year, 0, 1);
+    const days = Math.floor((now.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
+    const weekNumber = Math.ceil((days + startOfYear.getDay() + 1) / 7);
+    return `${year}-W${weekNumber.toString().padStart(2, '0')}`;
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();

@@ -1,4 +1,5 @@
 import { pgTable, text, serial, integer, boolean, timestamp, json } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -69,6 +70,26 @@ export const githubUserSchema = z.object({
   name: z.string().optional().nullable(),
   email: z.string().optional().nullable(),
 });
+
+// Relations
+export const usersRelations = relations(users, ({ many }) => ({
+  repositories: many(repositories),
+  weeklyStats: many(weeklyStats),
+}));
+
+export const repositoriesRelations = relations(repositories, ({ one }) => ({
+  user: one(users, {
+    fields: [repositories.userId],
+    references: [users.id],
+  }),
+}));
+
+export const weeklyStatsRelations = relations(weeklyStats, ({ one }) => ({
+  user: one(users, {
+    fields: [weeklyStats.userId],
+    references: [users.id],
+  }),
+}));
 
 // Export types
 export type User = typeof users.$inferSelect;
