@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useLocation } from 'wouter';
+import { useAuth } from '@/hooks/use-auth';
 import { MemberCard } from '@/components/member-card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,6 +9,31 @@ import { MemberWithRepositories } from '@/lib/types';
 import { Search } from 'lucide-react';
 
 export default function CommunityPage() {
+  const { user, isLoading: authLoading } = useAuth();
+  const [, setLocation] = useLocation();
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !user) {
+      setLocation('/login');
+    }
+  }, [user, authLoading, setLocation]);
+
+  // Don't render page content if not authenticated
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-2 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null; // Will redirect via useEffect
+  }
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);

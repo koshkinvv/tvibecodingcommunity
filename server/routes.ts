@@ -325,7 +325,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Community members endpoint
-  app.get("/api/community", async (req, res) => {
+  app.get("/api/community", auth.isAuthenticated, async (req, res) => {
     try {
       const users = await storage.getUsers();
       const community = [];
