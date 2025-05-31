@@ -333,11 +333,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
       for (const user of users) {
         const repositories = await storage.getRepositoriesByUser(user.id);
         
-        // Calculate overall status
+        // Update repository statuses with fresh data from GitHub if we have a token
+        const updatedRepositories = [];
+        for (const repo of repositories) {
+          let updatedRepo = { ...repo };
+          
+          if (user.githubToken) {
+            try {
+              githubClient.setToken(user.githubToken);
+              const lastCommitDate = await githubClient.getLastCommitDate(repo);
+              const newStatus = githubClient.calculateRepositoryStatus(lastCommitDate);
+              
+              // Update the repository in storage if status changed
+              const needsUpdate = newStatus !== repo.status || 
+                  (lastCommitDate && repo.lastCommitDate && lastCommitDate.getTime() !== new Date(repo.lastCommitDate).getTime()) ||
+                  (!lastCommitDate && repo.lastCommitDate) ||
+                  (lastCommitDate && !repo.lastCommitDate);
+              
+              if (needsUpdate) {
+                updatedRepo = await storage.updateRepository(repo.id, {
+                  status: newStatus,
+                  lastCommitDate: lastCommitDate as any // Type assertion for compatibility
+                }) || repo;
+              }
+            } catch (error) {
+              console.error(`Error updating repository ${repo.fullName}:`, error);
+            }
+          }
+          
+          updatedRepositories.push(updatedRepo);
+        }
+        
+        // Calculate overall status based on updated repositories
         let overallStatus = 'inactive';
-        if (repositories.some(r => r.status === 'active')) {
+        if (updatedRepositories.some(r => r.status === 'active')) {
           overallStatus = 'active';
-        } else if (repositories.some(r => r.status === 'warning')) {
+        } else if (updatedRepositories.some(r => r.status === 'warning')) {
           overallStatus = 'warning';
         }
         
@@ -347,7 +378,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           name: user.name,
           avatarUrl: user.avatarUrl,
           status: overallStatus,
-          repositories: repositories.map(r => ({
+          repositories: updatedRepositories.map(r => ({
             id: r.id,
             name: r.name,
             fullName: r.fullName,
