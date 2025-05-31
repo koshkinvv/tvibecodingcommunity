@@ -1,37 +1,52 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AdminUserTable } from '@/components/admin/admin-user-table';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { UserStats } from '@/lib/types';
-import { CalendarDays, Hammer, Users, RefreshCcw } from 'lucide-react';
+import { CalendarDays, Hammer, Users, RefreshCcw, CheckCircle, AlertCircle, XCircle } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState('overview');
+  const [lastCheckResults, setLastCheckResults] = useState<any>(null);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Fetch stats
   const { data: stats, isLoading: statsLoading } = useQuery<UserStats>({
     queryKey: ['/api/stats'],
   });
 
-  const handleManualRepositoryCheck = async () => {
-    try {
-      await apiRequest('POST', '/api/dev/check-repos');
+  // Repository check mutation
+  const repositoryCheckMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest('POST', '/api/admin/check-repositories');
+    },
+    onSuccess: (data: any) => {
+      setLastCheckResults(data.results);
       toast({
-        title: 'Repository check triggered',
-        description: 'The system will now check all repositories for activity.'
+        title: 'Repository check completed',
+        description: `Checked ${data.results.usersChecked} users, updated ${data.results.repositoriesUpdated} repositories`,
       });
-    } catch (error) {
+      // Refresh stats and community data
+      queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/community'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+    },
+    onError: (error) => {
       toast({
-        title: 'Error',
-        description: `Failed to trigger repository check: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        title: 'Repository check failed',
+        description: `Failed to complete repository check: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: 'destructive'
       });
-    }
+    },
+  });
+
+  const handleManualRepositoryCheck = () => {
+    repositoryCheckMutation.mutate();
   };
 
   return (
@@ -42,9 +57,12 @@ export default function AdminPage() {
             <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">Admin Dashboard</h2>
           </div>
           <div className="mt-4 flex md:mt-0 md:ml-4">
-            <Button onClick={handleManualRepositoryCheck}>
-              <RefreshCcw className="h-4 w-4 mr-2" />
-              Run Repository Check
+            <Button 
+              onClick={handleManualRepositoryCheck}
+              disabled={repositoryCheckMutation.isPending}
+            >
+              <RefreshCcw className={`h-4 w-4 mr-2 ${repositoryCheckMutation.isPending ? 'animate-spin' : ''}`} />
+              {repositoryCheckMutation.isPending ? 'Checking...' : 'Run Repository Check'}
             </Button>
           </div>
         </div>
@@ -148,29 +166,103 @@ export default function AdminPage() {
             </TabsList>
             
             <TabsContent value="overview">
-              <Card>
-                <CardContent className="p-6">
-                  <h3 className="text-lg font-medium mb-4">System Status</h3>
-                  <div className="space-y-4">
-                    <div className="flex justify-between p-3 bg-gray-50 rounded-md">
-                      <span className="font-medium">Daily Repository Check</span>
-                      <span className="text-green-600">Active</span>
+              <div className="space-y-6">
+                <Card>
+                  <CardContent className="p-6">
+                    <h3 className="text-lg font-medium mb-4">System Status</h3>
+                    <div className="space-y-4">
+                      <div className="flex justify-between p-3 bg-gray-50 rounded-md">
+                        <span className="font-medium">Daily Repository Check</span>
+                        <span className="text-green-600">Active</span>
+                      </div>
+                      <div className="flex justify-between p-3 bg-gray-50 rounded-md">
+                        <span className="font-medium">GitHub API Status</span>
+                        <span className="text-green-600">Connected</span>
+                      </div>
+                      <div className="flex justify-between p-3 bg-gray-50 rounded-md">
+                        <span className="font-medium">Notification System</span>
+                        <span className="text-green-600">Active</span>
+                      </div>
+                      <div className="flex justify-between p-3 bg-gray-50 rounded-md">
+                        <span className="font-medium">Weekly Stats Calculation</span>
+                        <span className="text-green-600">Active</span>
+                      </div>
                     </div>
-                    <div className="flex justify-between p-3 bg-gray-50 rounded-md">
-                      <span className="font-medium">GitHub API Status</span>
-                      <span className="text-green-600">Connected</span>
-                    </div>
-                    <div className="flex justify-between p-3 bg-gray-50 rounded-md">
-                      <span className="font-medium">Notification System</span>
-                      <span className="text-green-600">Active</span>
-                    </div>
-                    <div className="flex justify-between p-3 bg-gray-50 rounded-md">
-                      <span className="font-medium">Weekly Stats Calculation</span>
-                      <span className="text-green-600">Active</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+
+                {/* Last Repository Check Results */}
+                {lastCheckResults && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center">
+                        <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
+                        Last Repository Check Results
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                        <div className="text-center p-3 bg-blue-50 rounded-md">
+                          <div className="text-2xl font-bold text-blue-600">{lastCheckResults.usersChecked}</div>
+                          <div className="text-sm text-blue-700">Users Checked</div>
+                        </div>
+                        <div className="text-center p-3 bg-green-50 rounded-md">
+                          <div className="text-2xl font-bold text-green-600">{lastCheckResults.repositoriesUpdated}</div>
+                          <div className="text-sm text-green-700">Repositories Updated</div>
+                        </div>
+                        <div className="text-center p-3 bg-red-50 rounded-md">
+                          <div className="text-2xl font-bold text-red-600">{lastCheckResults.errors}</div>
+                          <div className="text-sm text-red-700">Errors</div>
+                        </div>
+                      </div>
+
+                      {lastCheckResults.details && lastCheckResults.details.length > 0 && (
+                        <div>
+                          <h4 className="font-medium mb-2">Recent Updates</h4>
+                          <div className="max-h-64 overflow-y-auto space-y-1">
+                            {lastCheckResults.details.slice(0, 10).map((detail: any, index: number) => (
+                              <div key={index} className="text-sm p-2 bg-gray-50 rounded flex items-center">
+                                {detail.status === 'error' ? (
+                                  <XCircle className="h-4 w-4 text-red-500 mr-2 flex-shrink-0" />
+                                ) : detail.status === 'skipped' ? (
+                                  <AlertCircle className="h-4 w-4 text-yellow-500 mr-2 flex-shrink-0" />
+                                ) : (
+                                  <CheckCircle className="h-4 w-4 text-green-500 mr-2 flex-shrink-0" />
+                                )}
+                                <div className="flex-1">
+                                  <span className="font-medium">{detail.user}</span>
+                                  {detail.repository && (
+                                    <>
+                                      <span className="text-gray-500 mx-1">/</span>
+                                      <span>{detail.repository}</span>
+                                    </>
+                                  )}
+                                  {detail.oldStatus && detail.newStatus && (
+                                    <span className="text-gray-500 ml-2">
+                                      ({detail.oldStatus} → {detail.newStatus})
+                                    </span>
+                                  )}
+                                  {detail.reason && (
+                                    <span className="text-gray-500 ml-2">- {detail.reason}</span>
+                                  )}
+                                  {detail.error && (
+                                    <span className="text-red-500 ml-2">- {detail.error}</span>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                          {lastCheckResults.details.length > 10 && (
+                            <p className="text-sm text-gray-500 mt-2">
+                              Showing 10 of {lastCheckResults.details.length} updates
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
             </TabsContent>
             
             <TabsContent value="members">

@@ -346,7 +346,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
             userId: user.id,
             name,
             fullName,
-            status: 'pending',
             lastCommitDate: null
           });
 
@@ -658,6 +657,128 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to delete user" });
     }
   });
+
+  // Admin - trigger manual repository check
+  app.post("/api/admin/check-repositories", auth.isAdmin, async (req, res) => {
+    try {
+      const adminUser = req.user as any;
+      console.log(`Admin ${adminUser.username} triggered manual repository check`);
+      
+      // Import scheduler to trigger manual check
+      const { scheduler } = await import('./scheduler');
+      
+      // Trigger the repository check manually
+      const checkResults = await triggerManualRepositoryCheck();
+      
+      res.json({
+        success: true,
+        message: 'Repository check completed successfully',
+        results: checkResults
+      });
+    } catch (error) {
+      console.error("Error during manual repository check:", error);
+      res.status(500).json({ 
+        error: "Failed to complete repository check",
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Helper function for manual repository check
+  async function triggerManualRepositoryCheck() {
+    const results = {
+      usersChecked: 0,
+      repositoriesUpdated: 0,
+      errors: 0,
+      details: [] as any[]
+    };
+
+    try {
+      // Get all users (except those on vacation)
+      const users = await storage.getUsers();
+      
+      for (const user of users) {
+        // Skip users on vacation
+        if (user.onVacation) {
+          if (user.vacationUntil && new Date() > new Date(user.vacationUntil)) {
+            // Vacation period ended, reset the vacation mode
+            await storage.updateUser(user.id, {
+              onVacation: false,
+              vacationUntil: null
+            });
+            console.log(`Vacation ended for user: ${user.username}`);
+          } else {
+            // User still on vacation, skip
+            continue;
+          }
+        }
+
+        results.usersChecked++;
+        
+        // Get user's repositories
+        const repositories = await storage.getRepositoriesByUser(user.id);
+        if (repositories.length === 0) continue;
+        
+        // Initialize GitHub client with user's token
+        if (user.githubToken) {
+          githubClient.setToken(user.githubToken);
+        } else {
+          // Skip if we don't have a token
+          console.log(`No GitHub token for user: ${user.username}, skipping`);
+          results.details.push({
+            user: user.username,
+            status: 'skipped',
+            reason: 'No GitHub token'
+          });
+          continue;
+        }
+
+        // Update each repository's status
+        for (const repo of repositories) {
+          try {
+            const lastCommitDate = await githubClient.getLastCommitDate(repo);
+            const newStatus = githubClient.calculateRepositoryStatus(lastCommitDate);
+            
+            // Update repository if status changed
+            if (newStatus !== repo.status || 
+                (lastCommitDate && repo.lastCommitDate && lastCommitDate.getTime() !== new Date(repo.lastCommitDate).getTime()) ||
+                (!lastCommitDate && repo.lastCommitDate) ||
+                (lastCommitDate && !repo.lastCommitDate)) {
+              
+              await storage.updateRepository(repo.id, {
+                status: newStatus,
+                lastCommitDate: lastCommitDate as any
+              });
+              
+              results.repositoriesUpdated++;
+              results.details.push({
+                user: user.username,
+                repository: repo.fullName,
+                oldStatus: repo.status,
+                newStatus: newStatus,
+                lastCommit: lastCommitDate?.toISOString()
+              });
+            }
+          } catch (error) {
+            console.error(`Error updating repository ${repo.fullName}:`, error);
+            results.errors++;
+            results.details.push({
+              user: user.username,
+              repository: repo.fullName,
+              status: 'error',
+              error: error instanceof Error ? error.message : 'Unknown error'
+            });
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error during repository check:", error);
+      results.errors++;
+      throw error;
+    }
+
+    return results;
+  }
   
   // Verify Telegram bot integration
   app.post("/api/telegram/verify", auth.isAuthenticated, async (req, res) => {
