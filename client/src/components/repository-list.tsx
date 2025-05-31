@@ -41,6 +41,7 @@ type AddRepositoryFormValues = z.infer<typeof addRepositorySchema>;
 export function RepositoryList({ userId, readOnly = false }: RepositoryListProps) {
   const [repositoryToDelete, setRepositoryToDelete] = useState<Repository | null>(null);
   const [showGitHubRepos, setShowGitHubRepos] = useState(false);
+  const [selectedRepos, setSelectedRepos] = useState<string[]>([]);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -107,6 +108,31 @@ export function RepositoryList({ userId, readOnly = false }: RepositoryListProps
     },
   });
 
+  // Mutation to add multiple repositories
+  const addMultipleMutation = useMutation({
+    mutationFn: async (repos: string[]) => {
+      return apiRequest('POST', '/api/repositories/multiple', { repositoryNames: repos });
+    },
+    onSuccess: (data: any) => {
+      const addedCount = data.added?.length || 0;
+      const skippedCount = data.skipped?.length || 0;
+      
+      toast({
+        title: 'Repositories processed',
+        description: `${addedCount} repositories added${skippedCount > 0 ? `, ${skippedCount} skipped (already exist)` : ''}`,
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/repositories'] });
+      setSelectedRepos([]);
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error',
+        description: `Failed to add repositories: ${error.message}`,
+        variant: 'destructive',
+      });
+    },
+  });
+
   // Handle repository form submission
   const onSubmit = (data: AddRepositoryFormValues) => {
     addMutation.mutate(data);
@@ -119,6 +145,22 @@ export function RepositoryList({ userId, readOnly = false }: RepositoryListProps
     const parts = value.split('/');
     if (parts.length === 2 && !form.getValues('name')) {
       form.setValue('name', parts[1]);
+    }
+  };
+
+  // Handle multiple repository selection
+  const handleRepoSelection = (repoFullName: string) => {
+    setSelectedRepos(prev => 
+      prev.includes(repoFullName) 
+        ? prev.filter(name => name !== repoFullName)
+        : [...prev, repoFullName]
+    );
+  };
+
+  // Handle adding selected repositories
+  const handleAddSelected = () => {
+    if (selectedRepos.length > 0) {
+      addMultipleMutation.mutate(selectedRepos);
     }
   };
 
@@ -222,30 +264,58 @@ export function RepositoryList({ userId, readOnly = false }: RepositoryListProps
             {/* GitHub Repositories List */}
             {showGitHubRepos && (
               <div className="mt-4 mb-6">
-                <h4 className="text-md font-medium text-gray-700 mb-3">Your GitHub Repositories</h4>
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-md font-medium text-gray-700">Your GitHub Repositories</h4>
+                  {selectedRepos.length > 0 && (
+                    <Button
+                      onClick={handleAddSelected}
+                      disabled={addMultipleMutation.isPending}
+                      size="sm"
+                    >
+                      {addMultipleMutation.isPending ? 'Adding...' : `Add Selected (${selectedRepos.length})`}
+                    </Button>
+                  )}
+                </div>
                 {isLoadingGitHub ? (
                   <p className="text-gray-500">Loading your repositories...</p>
-                ) : githubRepos && githubRepos.length > 0 ? (
+                ) : githubRepos && Array.isArray(githubRepos) && githubRepos.length > 0 ? (
                   <div className="space-y-2 max-h-64 overflow-y-auto">
-                    {githubRepos.map((repo: any) => (
-                      <div key={repo.id} className="flex items-center justify-between p-2 border rounded-md">
-                        <div className="flex-1">
-                          <p className="font-medium text-sm">{repo.fullName}</p>
-                          {repo.description && (
-                            <p className="text-xs text-gray-500">{repo.description}</p>
-                          )}
+                    {githubRepos.map((repo: any) => {
+                      const isSelected = selectedRepos.includes(repo.fullName);
+                      const isAlreadyAdded = repositories?.some(r => r.fullName === repo.fullName);
+                      
+                      return (
+                        <div key={repo.id} className="flex items-center p-2 border rounded-md">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            disabled={isAlreadyAdded}
+                            onChange={() => handleRepoSelection(repo.fullName)}
+                            className="mr-3 h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                          />
+                          <div className="flex-1">
+                            <p className={`font-medium text-sm ${isAlreadyAdded ? 'text-gray-400' : ''}`}>
+                              {repo.fullName}
+                              {isAlreadyAdded && <span className="ml-2 text-xs">(already added)</span>}
+                            </p>
+                            {repo.description && (
+                              <p className="text-xs text-gray-500">{repo.description}</p>
+                            )}
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={isAlreadyAdded}
+                            onClick={() => {
+                              form.setValue('fullName', repo.fullName);
+                              form.setValue('name', repo.name);
+                            }}
+                          >
+                            Use Single
+                          </Button>
                         </div>
-                        <Button
-                          size="sm"
-                          onClick={() => {
-                            form.setValue('fullName', repo.fullName);
-                            form.setValue('name', repo.name);
-                          }}
-                        >
-                          Use
-                        </Button>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <p className="text-gray-500">No repositories found or failed to load.</p>

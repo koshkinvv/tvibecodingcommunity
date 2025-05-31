@@ -293,6 +293,82 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to add repository" });
     }
   });
+
+  // Add multiple repositories
+  app.post("/api/repositories/multiple", auth.isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const { repositoryNames } = req.body;
+      
+      if (!Array.isArray(repositoryNames) || repositoryNames.length === 0) {
+        return res.status(400).json({ error: 'Repository names array is required' });
+      }
+
+      const results = {
+        added: [] as any[],
+        skipped: [] as any[],
+        errors: [] as any[]
+      };
+
+      // Get existing repositories to avoid duplicates
+      const existingRepos = await storage.getRepositoriesByUser(user.id);
+      const existingFullNames = new Set(existingRepos.map(r => r.fullName));
+
+      for (const fullName of repositoryNames) {
+        try {
+          // Skip if already exists
+          if (existingFullNames.has(fullName)) {
+            results.skipped.push({ fullName, reason: 'Already exists' });
+            continue;
+          }
+
+          // Validate format
+          if (!fullName.match(/^[a-zA-Z0-9-]+\/[a-zA-Z0-9._-]+$/)) {
+            results.errors.push({ fullName, reason: 'Invalid format' });
+            continue;
+          }
+
+          // Extract repository name
+          const name = fullName.split('/')[1];
+
+          // Check if repository exists on GitHub (if we have a token)
+          if (user.githubToken) {
+            githubClient.setToken(user.githubToken);
+            const exists = await githubClient.checkRepositoryExists(fullName);
+            if (!exists) {
+              results.errors.push({ fullName, reason: 'Repository not found on GitHub' });
+              continue;
+            }
+          }
+
+          // Create repository
+          const repository = await storage.createRepository({
+            userId: user.id,
+            name,
+            fullName,
+            status: 'pending',
+            lastCommitDate: null
+          });
+
+          results.added.push({
+            id: repository.id,
+            name: repository.name,
+            fullName: repository.fullName,
+            status: repository.status
+          });
+
+        } catch (error) {
+          console.error(`Error adding repository ${fullName}:`, error);
+          results.errors.push({ fullName, reason: 'Server error' });
+        }
+      }
+
+      res.json(results);
+    } catch (error) {
+      console.error("Error adding multiple repositories:", error);
+      res.status(500).json({ error: "Failed to add repositories" });
+    }
+  });
   
   // Remove repository
   app.delete("/api/repositories/:id", auth.isAuthenticated, async (req, res) => {
