@@ -90,9 +90,17 @@ export function setupAuth(app: express.Express) {
   // Deserialize user from session
   passport.deserializeUser(async (id: number, done) => {
     try {
+      console.log('Deserializing user with ID:', id);
       const user = await storage.getUser(id);
-      done(null, user);
+      if (user) {
+        console.log('User found:', user.username);
+        done(null, user);
+      } else {
+        console.log('User not found for ID:', id);
+        done(null, false);
+      }
     } catch (error) {
+      console.error('Error deserializing user:', error);
       done(error);
     }
   });
@@ -103,7 +111,8 @@ export function setupAuth(app: express.Express) {
     resave: false,
     saveUninitialized: false,
     cookie: { 
-      secure: process.env.NODE_ENV === 'production',
+      secure: false, // Temporarily disable for debugging
+      httpOnly: true,
       maxAge: 7 * 24 * 60 * 60 * 1000 // 1 week
     },
     store: new MemoryStoreSession({
@@ -120,9 +129,12 @@ export function setupAuth(app: express.Express) {
   
   app.get('/api/auth/github/callback', 
     passport.authenticate('github', { 
-      failureRedirect: '/login',
-      successRedirect: '/'
-    })
+      failureRedirect: '/login'
+    }),
+    (req, res) => {
+      console.log('GitHub callback successful, user:', req.user);
+      res.redirect('/');
+    }
   );
   
   app.get('/api/auth/logout', (req, res) => {
