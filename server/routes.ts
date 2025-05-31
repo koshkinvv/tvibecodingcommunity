@@ -236,8 +236,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const user = req.user as any;
       
-      // Extend schema to validate GitHub repo format
-      const addRepoSchema = insertRepositorySchema.extend({
+      // Extend schema to validate GitHub repo format, excluding userId since it's set automatically
+      const addRepoSchema = insertRepositorySchema.omit({ userId: true }).extend({
         fullName: z.string().regex(/^[a-zA-Z0-9-]+\/[a-zA-Z0-9._-]+$/, 
           'Repository must be in format "username/repository"')
       });
