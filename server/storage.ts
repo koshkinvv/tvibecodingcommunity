@@ -61,6 +61,34 @@ export interface IStorage {
   createUserProgress(progress: InsertUserProgress): Promise<UserProgress>;
   updateUserProgress(userId: number, progress: Partial<UserProgress>): Promise<UserProgress | undefined>;
   updateUserProgressStats(userId: number, stats: { commits?: number; activeDays?: number; currentStreak?: number; experience?: number }): Promise<UserProgress | undefined>;
+  
+  // Achievement operations
+  getAchievements(): Promise<Achievement[]>;
+  createAchievement(achievement: InsertAchievement): Promise<Achievement>;
+  getUserAchievements(userId: number): Promise<(UserAchievement & { achievement: Achievement })[]>;
+  awardAchievement(userId: number, achievementId: number): Promise<UserAchievement>;
+  checkAndAwardAchievements(userId: number): Promise<UserAchievement[]>;
+  
+  // Mentorship operations
+  getMentorships(userId: number): Promise<(Mentorship & { mentor: User; mentee: User })[]>;
+  createMentorship(mentorship: InsertMentorship): Promise<Mentorship>;
+  updateMentorship(id: number, mentorship: Partial<Mentorship>): Promise<Mentorship | undefined>;
+  getAvailableMentors(): Promise<User[]>;
+  
+  // Learning resources operations
+  getLearningResources(): Promise<(LearningResource & { author: User })[]>;
+  createLearningResource(resource: InsertLearningResource): Promise<LearningResource>;
+  updateLearningResource(id: number, resource: Partial<LearningResource>): Promise<LearningResource | undefined>;
+  
+  // Challenge operations
+  getChallenges(): Promise<(Challenge & { creator: User; participants: ChallengeParticipant[] })[]>;
+  createChallenge(challenge: InsertChallenge): Promise<Challenge>;
+  joinChallenge(challengeId: number, userId: number): Promise<ChallengeParticipant>;
+  submitChallenge(challengeId: number, userId: number, submissionUrl: string): Promise<ChallengeParticipant | undefined>;
+  
+  // Code review operations
+  getCodeReviews(repositoryId: number): Promise<(CodeReview & { reviewer: User })[]>;
+  createCodeReview(review: InsertCodeReview): Promise<CodeReview>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -449,6 +477,313 @@ export class DatabaseStorage implements IStorage {
       experience: newExperience,
       lastActivityDate: new Date()
     });
+  }
+
+  // Achievement operations
+  async getAchievements(): Promise<Achievement[]> {
+    return await db.select().from(achievements).where(eq(achievements.isActive, true));
+  }
+
+  async createAchievement(achievement: InsertAchievement): Promise<Achievement> {
+    const [newAchievement] = await db
+      .insert(achievements)
+      .values(achievement)
+      .returning();
+    return newAchievement;
+  }
+
+  async getUserAchievements(userId: number): Promise<(UserAchievement & { achievement: Achievement })[]> {
+    const userAchievementsList = await db
+      .select({
+        id: userAchievements.id,
+        userId: userAchievements.userId,
+        achievementId: userAchievements.achievementId,
+        earnedAt: userAchievements.earnedAt,
+        progress: userAchievements.progress,
+        achievement: {
+          id: achievements.id,
+          name: achievements.name,
+          description: achievements.description,
+          icon: achievements.icon,
+          category: achievements.category,
+          condition: achievements.condition,
+          xpReward: achievements.xpReward,
+          rarity: achievements.rarity,
+          isActive: achievements.isActive,
+          createdAt: achievements.createdAt,
+        }
+      })
+      .from(userAchievements)
+      .innerJoin(achievements, eq(userAchievements.achievementId, achievements.id))
+      .where(eq(userAchievements.userId, userId));
+    
+    return userAchievementsList as (UserAchievement & { achievement: Achievement })[];
+  }
+
+  async awardAchievement(userId: number, achievementId: number): Promise<UserAchievement> {
+    const [newUserAchievement] = await db
+      .insert(userAchievements)
+      .values({ userId, achievementId })
+      .returning();
+    return newUserAchievement;
+  }
+
+  async checkAndAwardAchievements(userId: number): Promise<UserAchievement[]> {
+    const progress = await this.getUserProgress(userId);
+    if (!progress) return [];
+
+    const allAchievements = await this.getAchievements();
+    const earnedAchievements = await this.getUserAchievements(userId);
+    const earnedIds = earnedAchievements.map(ua => ua.achievementId);
+    
+    const newAchievements: UserAchievement[] = [];
+
+    for (const achievement of allAchievements) {
+      if (earnedIds.includes(achievement.id)) continue;
+
+      const condition = achievement.condition as any;
+      let shouldAward = false;
+
+      // Check achievement conditions
+      switch (condition.type) {
+        case 'commits':
+          shouldAward = progress.totalCommits >= condition.value;
+          break;
+        case 'streak':
+          shouldAward = progress.currentStreak >= condition.value;
+          break;
+        case 'level':
+          shouldAward = progress.level >= condition.value;
+          break;
+        case 'active_days':
+          shouldAward = progress.activeDays >= condition.value;
+          break;
+      }
+
+      if (shouldAward) {
+        const newAchievement = await this.awardAchievement(userId, achievement.id);
+        newAchievements.push(newAchievement);
+        
+        // Award XP for achievement
+        await this.updateUserProgressStats(userId, { experience: achievement.xpReward });
+      }
+    }
+
+    return newAchievements;
+  }
+
+  // Mentorship operations
+  async getMentorships(userId: number): Promise<(Mentorship & { mentor: User; mentee: User })[]> {
+    const mentorshipsList = await db
+      .select({
+        id: mentorships.id,
+        mentorId: mentorships.mentorId,
+        menteeId: mentorships.menteeId,
+        status: mentorships.status,
+        technologies: mentorships.technologies,
+        goals: mentorships.goals,
+        startDate: mentorships.startDate,
+        endDate: mentorships.endDate,
+        createdAt: mentorships.createdAt,
+        mentor: {
+          id: users.id,
+          username: users.username,
+          name: users.name,
+          avatarUrl: users.avatarUrl,
+        },
+        mentee: {
+          id: users.id,
+          username: users.username,
+          name: users.name,
+          avatarUrl: users.avatarUrl,
+        }
+      })
+      .from(mentorships)
+      .innerJoin(users, eq(mentorships.mentorId, users.id))
+      .where(eq(mentorships.mentorId, userId));
+    
+    return mentorshipsList as (Mentorship & { mentor: User; mentee: User })[];
+  }
+
+  async createMentorship(mentorship: InsertMentorship): Promise<Mentorship> {
+    const [newMentorship] = await db
+      .insert(mentorships)
+      .values(mentorship)
+      .returning();
+    return newMentorship;
+  }
+
+  async updateMentorship(id: number, mentorshipData: Partial<Mentorship>): Promise<Mentorship | undefined> {
+    const [updated] = await db
+      .update(mentorships)
+      .set(mentorshipData)
+      .where(eq(mentorships.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async getAvailableMentors(): Promise<User[]> {
+    // Get users with high level or experience who can be mentors
+    const mentors = await db
+      .select({
+        id: users.id,
+        githubId: users.githubId,
+        username: users.username,
+        email: users.email,
+        name: users.name,
+        avatarUrl: users.avatarUrl,
+        githubToken: users.githubToken,
+        telegramId: users.telegramId,
+        notificationPreference: users.notificationPreference,
+        onVacation: users.onVacation,
+        vacationUntil: users.vacationUntil,
+        isAdmin: users.isAdmin,
+        lastActive: users.lastActive,
+        createdAt: users.createdAt,
+      })
+      .from(users)
+      .innerJoin(userProgress, eq(users.id, userProgress.userId))
+      .where(gte(userProgress.level, 3)); // Level 3+ can be mentors
+
+    return mentors;
+  }
+
+  // Learning resources operations
+  async getLearningResources(): Promise<(LearningResource & { author: User })[]> {
+    const resources = await db
+      .select({
+        id: learningResources.id,
+        title: learningResources.title,
+        description: learningResources.description,
+        content: learningResources.content,
+        type: learningResources.type,
+        difficulty: learningResources.difficulty,
+        technologies: learningResources.technologies,
+        authorId: learningResources.authorId,
+        views: learningResources.views,
+        likes: learningResources.likes,
+        isPublished: learningResources.isPublished,
+        createdAt: learningResources.createdAt,
+        updatedAt: learningResources.updatedAt,
+        author: {
+          id: users.id,
+          username: users.username,
+          name: users.name,
+          avatarUrl: users.avatarUrl,
+        }
+      })
+      .from(learningResources)
+      .innerJoin(users, eq(learningResources.authorId, users.id))
+      .where(eq(learningResources.isPublished, true));
+    
+    return resources as (LearningResource & { author: User })[];
+  }
+
+  async createLearningResource(resource: InsertLearningResource): Promise<LearningResource> {
+    const [newResource] = await db
+      .insert(learningResources)
+      .values(resource)
+      .returning();
+    return newResource;
+  }
+
+  async updateLearningResource(id: number, resourceData: Partial<LearningResource>): Promise<LearningResource | undefined> {
+    const [updated] = await db
+      .update(learningResources)
+      .set({ ...resourceData, updatedAt: new Date() })
+      .where(eq(learningResources.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  // Challenge operations
+  async getChallenges(): Promise<(Challenge & { creator: User; participants: ChallengeParticipant[] })[]> {
+    const challengesList = await db.select().from(challenges).where(eq(challenges.isActive, true));
+    
+    const challengesWithDetails = await Promise.all(
+      challengesList.map(async (challenge) => {
+        const creator = await this.getUser(challenge.createdBy);
+        const participants = await db
+          .select()
+          .from(challengeParticipants)
+          .where(eq(challengeParticipants.challengeId, challenge.id));
+        
+        return {
+          ...challenge,
+          creator: creator!,
+          participants
+        };
+      })
+    );
+
+    return challengesWithDetails;
+  }
+
+  async createChallenge(challenge: InsertChallenge): Promise<Challenge> {
+    const [newChallenge] = await db
+      .insert(challenges)
+      .values(challenge)
+      .returning();
+    return newChallenge;
+  }
+
+  async joinChallenge(challengeId: number, userId: number): Promise<ChallengeParticipant> {
+    const [participant] = await db
+      .insert(challengeParticipants)
+      .values({ challengeId, userId })
+      .returning();
+    return participant;
+  }
+
+  async submitChallenge(challengeId: number, userId: number, submissionUrl: string): Promise<ChallengeParticipant | undefined> {
+    const [updated] = await db
+      .update(challengeParticipants)
+      .set({ 
+        submissionUrl, 
+        status: 'submitted',
+        submittedAt: new Date()
+      })
+      .where(and(
+        eq(challengeParticipants.challengeId, challengeId),
+        eq(challengeParticipants.userId, userId)
+      ))
+      .returning();
+    return updated || undefined;
+  }
+
+  // Code review operations
+  async getCodeReviews(repositoryId: number): Promise<(CodeReview & { reviewer: User })[]> {
+    const reviews = await db
+      .select({
+        id: codeReviews.id,
+        repositoryId: codeReviews.repositoryId,
+        reviewerId: codeReviews.reviewerId,
+        pullRequestUrl: codeReviews.pullRequestUrl,
+        rating: codeReviews.rating,
+        feedback: codeReviews.feedback,
+        suggestions: codeReviews.suggestions,
+        status: codeReviews.status,
+        createdAt: codeReviews.createdAt,
+        reviewer: {
+          id: users.id,
+          username: users.username,
+          name: users.name,
+          avatarUrl: users.avatarUrl,
+        }
+      })
+      .from(codeReviews)
+      .innerJoin(users, eq(codeReviews.reviewerId, users.id))
+      .where(eq(codeReviews.repositoryId, repositoryId));
+    
+    return reviews as (CodeReview & { reviewer: User })[];
+  }
+
+  async createCodeReview(review: InsertCodeReview): Promise<CodeReview> {
+    const [newReview] = await db
+      .insert(codeReviews)
+      .values(review)
+      .returning();
+    return newReview;
   }
 }
 

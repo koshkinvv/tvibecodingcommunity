@@ -1173,6 +1173,176 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ status: "healthy" });
   });
   
+  // Achievement routes
+  app.get("/api/achievements", async (req, res) => {
+    try {
+      const achievements = await storage.getAchievements();
+      res.json(achievements);
+    } catch (error) {
+      console.error("Error fetching achievements:", error);
+      res.status(500).json({ error: "Failed to fetch achievements" });
+    }
+  });
+
+  app.get("/api/user/achievements", auth.isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req.user as any)?.id;
+      const userAchievements = await storage.getUserAchievements(userId);
+      res.json(userAchievements);
+    } catch (error) {
+      console.error("Error fetching user achievements:", error);
+      res.status(500).json({ error: "Failed to fetch user achievements" });
+    }
+  });
+
+  app.post("/api/achievements", auth.isAdmin, async (req, res) => {
+    try {
+      const achievement = await storage.createAchievement(req.body);
+      res.json(achievement);
+    } catch (error) {
+      console.error("Error creating achievement:", error);
+      res.status(500).json({ error: "Failed to create achievement" });
+    }
+  });
+
+  // Mentorship routes
+  app.get("/api/mentorships", auth.isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req.user as any)?.id;
+      const mentorships = await storage.getMentorships(userId);
+      res.json(mentorships);
+    } catch (error) {
+      console.error("Error fetching mentorships:", error);
+      res.status(500).json({ error: "Failed to fetch mentorships" });
+    }
+  });
+
+  app.get("/api/mentors", async (req, res) => {
+    try {
+      const mentors = await storage.getAvailableMentors();
+      res.json(mentors);
+    } catch (error) {
+      console.error("Error fetching mentors:", error);
+      res.status(500).json({ error: "Failed to fetch mentors" });
+    }
+  });
+
+  app.post("/api/mentorships", auth.isAuthenticated, async (req, res) => {
+    try {
+      const mentorship = await storage.createMentorship(req.body);
+      res.json(mentorship);
+    } catch (error) {
+      console.error("Error creating mentorship:", error);
+      res.status(500).json({ error: "Failed to create mentorship" });
+    }
+  });
+
+  // Learning resources routes
+  app.get("/api/learning-resources", async (req, res) => {
+    try {
+      const resources = await storage.getLearningResources();
+      res.json(resources);
+    } catch (error) {
+      console.error("Error fetching learning resources:", error);
+      res.status(500).json({ error: "Failed to fetch learning resources" });
+    }
+  });
+
+  app.post("/api/learning-resources", auth.isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req.user as any)?.id;
+      const resource = await storage.createLearningResource({
+        ...req.body,
+        authorId: userId
+      });
+      res.json(resource);
+    } catch (error) {
+      console.error("Error creating learning resource:", error);
+      res.status(500).json({ error: "Failed to create learning resource" });
+    }
+  });
+
+  // Challenge routes
+  app.get("/api/challenges", async (req, res) => {
+    try {
+      const challenges = await storage.getChallenges();
+      res.json(challenges);
+    } catch (error) {
+      console.error("Error fetching challenges:", error);
+      res.status(500).json({ error: "Failed to fetch challenges" });
+    }
+  });
+
+  app.post("/api/challenges", auth.isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req.user as any)?.id;
+      const challenge = await storage.createChallenge({
+        ...req.body,
+        createdBy: userId
+      });
+      res.json(challenge);
+    } catch (error) {
+      console.error("Error creating challenge:", error);
+      res.status(500).json({ error: "Failed to create challenge" });
+    }
+  });
+
+  app.post("/api/challenges/:id/join", auth.isAuthenticated, async (req, res) => {
+    try {
+      const challengeId = parseInt(req.params.id);
+      const userId = (req.user as any)?.id;
+      
+      const participant = await storage.joinChallenge(challengeId, userId);
+      res.json(participant);
+    } catch (error) {
+      console.error("Error joining challenge:", error);
+      res.status(500).json({ error: "Failed to join challenge" });
+    }
+  });
+
+  app.post("/api/challenges/:id/submit", auth.isAuthenticated, async (req, res) => {
+    try {
+      const challengeId = parseInt(req.params.id);
+      const userId = (req.user as any)?.id;
+      const { submissionUrl } = req.body;
+      
+      const participant = await storage.submitChallenge(challengeId, userId, submissionUrl);
+      res.json(participant);
+    } catch (error) {
+      console.error("Error submitting challenge:", error);
+      res.status(500).json({ error: "Failed to submit challenge" });
+    }
+  });
+
+  // Code review routes
+  app.get("/api/repositories/:id/reviews", async (req, res) => {
+    try {
+      const repositoryId = parseInt(req.params.id);
+      const reviews = await storage.getCodeReviews(repositoryId);
+      res.json(reviews);
+    } catch (error) {
+      console.error("Error fetching code reviews:", error);
+      res.status(500).json({ error: "Failed to fetch code reviews" });
+    }
+  });
+
+  app.post("/api/repositories/:id/reviews", auth.isAuthenticated, async (req, res) => {
+    try {
+      const repositoryId = parseInt(req.params.id);
+      const userId = (req.user as any)?.id;
+      
+      const review = await storage.createCodeReview({
+        ...req.body,
+        repositoryId,
+        reviewerId: userId
+      });
+      res.json(review);
+    } catch (error) {
+      console.error("Error creating code review:", error);
+      res.status(500).json({ error: "Failed to create code review" });
+    }
+  });
+
   // Manual trigger for repository checks (for testing/development)
   if (process.env.NODE_ENV === 'development') {
     app.post("/api/dev/check-repos", auth.isAdmin, async (req, res) => {
