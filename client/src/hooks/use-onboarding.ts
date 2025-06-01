@@ -92,13 +92,26 @@ export const useOnboarding = () => {
   }, []);
 
   useEffect(() => {
-    // Auto-start onboarding for new users
-    if (user && !hasCompletedOnboarding && !isActive) {
+    // Check for pending onboarding step after navigation
+    const nextStep = sessionStorage.getItem('onboarding-next-step');
+    const onboardingInProgress = sessionStorage.getItem('onboarding-in-progress');
+    
+    if (nextStep && onboardingInProgress === 'true') {
+      const stepIndex = parseInt(nextStep, 10);
+      sessionStorage.removeItem('onboarding-next-step');
+      setCurrentStep(stepIndex);
+      setIsActive(true);
+      return;
+    }
+
+    // Auto-start onboarding for new users only on home page
+    if (user && !hasCompletedOnboarding && !isActive && window.location.pathname === '/') {
       const userOnboardingKey = `onboarding-completed-${user.id}`;
       const userCompleted = localStorage.getItem(userOnboardingKey);
       
-      if (!userCompleted) {
+      if (!userCompleted && !onboardingInProgress) {
         // Start onboarding for users who haven't completed it
+        sessionStorage.setItem('onboarding-in-progress', 'true');
         setTimeout(() => {
           startOnboarding();
         }, 1000); // Small delay for page to load
@@ -118,19 +131,19 @@ export const useOnboarding = () => {
       
       // Navigate to required page if needed
       if (nextStep.page && window.location.pathname !== nextStep.page) {
+        // Save the next step before navigation
+        sessionStorage.setItem('onboarding-next-step', nextStepIndex.toString());
         window.location.href = nextStep.page;
-        // Set timeout to allow page load
-        setTimeout(() => {
-          setCurrentStep(nextStepIndex);
-        }, 500);
       } else {
         setCurrentStep(nextStepIndex);
+        // Execute action if defined
+        if (nextStep.action) {
+          nextStep.action();
+        }
       }
-
-      // Execute action if defined
-      if (nextStep.action) {
-        nextStep.action();
-      }
+    } else {
+      // Last step reached, complete onboarding
+      completeOnboarding();
     }
   };
 
@@ -154,6 +167,7 @@ export const useOnboarding = () => {
   const skipOnboarding = () => {
     setIsActive(false);
     setHasCompletedOnboarding(true);
+    sessionStorage.removeItem('onboarding-in-progress');
     if (user) {
       const userOnboardingKey = `onboarding-completed-${user.id}`;
       localStorage.setItem(userOnboardingKey, "true");
@@ -164,6 +178,7 @@ export const useOnboarding = () => {
   const completeOnboarding = () => {
     setIsActive(false);
     setHasCompletedOnboarding(true);
+    sessionStorage.removeItem('onboarding-in-progress');
     if (user) {
       const userOnboardingKey = `onboarding-completed-${user.id}`;
       localStorage.setItem(userOnboardingKey, "true");
@@ -178,6 +193,8 @@ export const useOnboarding = () => {
     }
     localStorage.removeItem("onboarding-completed");
     localStorage.removeItem("onboarding-auto-start");
+    sessionStorage.removeItem('onboarding-in-progress');
+    sessionStorage.removeItem('onboarding-next-step');
     setHasCompletedOnboarding(false);
     setIsActive(false);
     setCurrentStep(0);
