@@ -6,7 +6,8 @@ import { MemberCard } from '@/components/member-card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { MemberWithRepositories } from '@/lib/types';
-import { Search } from 'lucide-react';
+import { Search, BookOpen } from 'lucide-react';
+import { Link } from 'wouter';
 
 export default function CommunityPage() {
   const { user, isLoading: authLoading } = useAuth();

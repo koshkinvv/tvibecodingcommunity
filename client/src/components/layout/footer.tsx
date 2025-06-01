@@ -12,9 +12,11 @@ export function Footer() {
             </a>
           </div>
           <div className="px-5 py-2">
-            <a href="#" className="text-base text-gray-500 hover:text-gray-900">
-              Community Guidelines
-            </a>
+            <Link href="/community/guidelines">
+              <a className="text-base text-gray-500 hover:text-gray-900">
+                Community Guidelines
+              </a>
+            </Link>
           </div>
           <div className="px-5 py-2">
             <a href="#" className="text-base text-gray-500 hover:text-gray-900">
