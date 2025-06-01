@@ -58,6 +58,7 @@ function App() {
             <Router />
           </main>
           <Footer />
+          <OnboardingProvider />
         </div>
         <Toaster />
       </TooltipProvider>

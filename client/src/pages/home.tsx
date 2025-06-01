@@ -32,7 +32,7 @@ export default function HomePage() {
         <div className="mt-8 bg-white overflow-hidden shadow rounded-lg">
           <div className="px-4 py-5 sm:p-6">
             {/* Stats section */}
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3" data-onboarding="stats">
               {/* Active Members */}
               <Card>
                 <CardContent className="px-4 py-5 sm:p-6">
@@ -132,7 +132,7 @@ export default function HomePage() {
 
         {/* Featured Members */}
         <h3 className="mt-8 text-lg font-medium text-gray-900">Featured Community Members</h3>
-        <div className="mt-2 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-2 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3" data-onboarding="featured-members">
           {membersLoading ? (
             // Loading skeleton
             Array(3).fill(0).map((_, i) => (

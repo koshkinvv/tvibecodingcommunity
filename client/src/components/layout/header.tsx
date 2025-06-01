@@ -55,7 +55,7 @@ export function Header() {
                 <span className="text-2xl font-bold text-primary">vibe<span className="text-gray-700">coding</span></span>
               </a>
             </Link>
-            <nav className="hidden sm:ml-10 sm:flex space-x-8">
+            <nav className="hidden sm:ml-10 sm:flex space-x-8" data-onboarding="navigation">
               <NavLink href="/">Home</NavLink>
               {user && <NavLink href="/activity">Activity</NavLink>}
               {user && <NavLink href="/insights">Insights</NavLink>}
@@ -64,7 +64,7 @@ export function Header() {
               {user?.isAdmin && <NavLink href="/admin">Admin</NavLink>}
             </nav>
           </div>
-          <div className="hidden sm:ml-6 sm:flex sm:items-center">
+          <div className="hidden sm:ml-6 sm:flex sm:items-center" data-onboarding="profile-menu">
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
