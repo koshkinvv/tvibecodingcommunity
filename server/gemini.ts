@@ -11,6 +11,38 @@ export interface CommitChangesSummary {
 }
 
 export class GeminiService {
+  async generateProjectDescription(repository: any, user: any): Promise<string> {
+    try {
+      const prompt = `
+Создай краткое и понятное описание проекта на русском языке для сообщества разработчиков.
+
+ИНФОРМАЦИЯ О ПРОЕКТЕ:
+- Название: ${repository.name}
+- Полное имя: ${repository.fullName}
+- Владелец: ${user.name || user.username}
+- Статус: ${repository.status}
+- Последняя активность: ${repository.lastCommitDate ? new Date(repository.lastCommitDate).toLocaleDateString('ru-RU') : 'Нет данных'}
+
+ТРЕБОВАНИЯ К ОПИСАНИЮ:
+- Используй простой и понятный язык
+- Опиши что это за проект простыми словами
+- Укажи основные технологии (если можно определить по названию)
+- Добавь информацию о статусе разработки
+- Максимум 2-3 предложения
+- Пиши на русском языке
+
+Создай описание проекта, которое будет интересно и понятно другим разработчикам в сообществе.
+`;
+
+      const result = await model.generateContent(prompt);
+      const response = result.response;
+      return response.text().trim();
+    } catch (error) {
+      console.error('Ошибка генерации описания проекта:', error);
+      return `Проект ${repository.name} от разработчика ${user.name || user.username}. Статус: ${repository.status}.`;
+    }
+  }
+
   async generateChangesSummary(commits: any[]): Promise<string> {
     try {
       if (!commits || commits.length === 0) {

@@ -32,6 +32,9 @@ export const repositories = pgTable("repositories", {
   lastCommitSha: text("last_commit_sha"), // Для отслеживания изменений
   changesSummary: text("changes_summary"), // AI-генерированное описание изменений
   summaryGeneratedAt: timestamp("summary_generated_at"), // Когда было создано описание
+  description: text("description"), // AI-генерированное описание проекта
+  descriptionGeneratedAt: timestamp("description_generated_at"), // Когда было создано описание проекта
+  isPublic: boolean("is_public").notNull().default(true), // Видимость в комьюнити
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -63,6 +66,15 @@ export const activityFeed = pgTable("activity_feed", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+// Comments on repositories
+export const repositoryComments = pgTable("repository_comments", {
+  id: serial("id").primaryKey(),
+  repositoryId: integer("repository_id").notNull().references(() => repositories.id, { onDelete: "cascade" }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // User insert schema without auto-generated fields
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -88,6 +100,12 @@ export const insertActivityFeedSchema = createInsertSchema(activityFeed).omit({
   createdAt: true,
 });
 
+// Repository comments insert schema without auto-generated fields
+export const insertRepositoryCommentSchema = createInsertSchema(repositoryComments).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const githubUserSchema = z.object({
   login: z.string(),
   id: z.number(),
@@ -102,6 +120,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   repositories: many(repositories),
   weeklyStats: many(weeklyStats),
   activityFeed: many(activityFeed),
+  repositoryComments: many(repositoryComments),
 }));
 
 export const repositoriesRelations = relations(repositories, ({ one, many }) => ({
@@ -110,6 +129,18 @@ export const repositoriesRelations = relations(repositories, ({ one, many }) => 
     references: [users.id],
   }),
   activityFeed: many(activityFeed),
+  comments: many(repositoryComments),
+}));
+
+export const repositoryCommentsRelations = relations(repositoryComments, ({ one }) => ({
+  repository: one(repositories, {
+    fields: [repositoryComments.repositoryId],
+    references: [repositories.id],
+  }),
+  user: one(users, {
+    fields: [repositoryComments.userId],
+    references: [users.id],
+  }),
 }));
 
 export const weeklyStatsRelations = relations(weeklyStats, ({ one }) => ({
@@ -139,4 +170,6 @@ export type WeeklyStat = typeof weeklyStats.$inferSelect;
 export type InsertWeeklyStat = z.infer<typeof insertWeeklyStatsSchema>;
 export type ActivityFeed = typeof activityFeed.$inferSelect;
 export type InsertActivityFeed = z.infer<typeof insertActivityFeedSchema>;
+export type RepositoryComment = typeof repositoryComments.$inferSelect;
+export type InsertRepositoryComment = z.infer<typeof insertRepositoryCommentSchema>;
 export type GithubUser = z.infer<typeof githubUserSchema>;
