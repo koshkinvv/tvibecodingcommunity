@@ -490,6 +490,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Generate repository description
+  app.post("/api/repositories/:id/generate-description", auth.isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const repoId = parseInt(req.params.id);
+      
+      // Get repository and verify ownership
+      const repository = await storage.getRepository(repoId);
+      if (!repository) {
+        return res.status(404).json({ error: 'Repository not found' });
+      }
+      
+      if (repository.userId !== user.id) {
+        return res.status(403).json({ error: 'You don\'t have permission to modify this repository' });
+      }
+      
+      // Generate description using AI
+      try {
+        const description = await geminiService.generateProjectDescription(repository, user);
+        
+        // Update repository with new description
+        const updatedRepo = await storage.updateRepository(repoId, {
+          description,
+          descriptionGeneratedAt: new Date()
+        });
+        
+        res.json({ 
+          success: true, 
+          description,
+          repository: updatedRepo
+        });
+      } catch (error) {
+        console.error("Error generating project description:", error);
+        res.status(500).json({ error: "Failed to generate project description" });
+      }
+    } catch (error) {
+      console.error("Error in generate description endpoint:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+  
   // Community members endpoint
   app.get("/api/community", auth.isAuthenticated, async (req, res) => {
     try {
