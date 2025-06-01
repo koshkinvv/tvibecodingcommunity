@@ -75,6 +75,21 @@ export const repositoryComments = pgTable("repository_comments", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// User progress tracking for gamification
+export const userProgress = pgTable("user_progress", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  totalCommits: integer("total_commits").notNull().default(0),
+  activeDays: integer("active_days").notNull().default(0),
+  currentStreak: integer("current_streak").notNull().default(0),
+  longestStreak: integer("longest_streak").notNull().default(0),
+  level: integer("level").notNull().default(1),
+  experience: integer("experience").notNull().default(0),
+  lastActivityDate: timestamp("last_activity_date"),
+  badges: json("badges").default([]), // Массив заработанных бейджей
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // User insert schema without auto-generated fields
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -106,6 +121,12 @@ export const insertRepositoryCommentSchema = createInsertSchema(repositoryCommen
   createdAt: true,
 });
 
+// User progress insert schema without auto-generated fields
+export const insertUserProgressSchema = createInsertSchema(userProgress).omit({
+  id: true,
+  updatedAt: true,
+});
+
 export const githubUserSchema = z.object({
   login: z.string(),
   id: z.number(),
@@ -116,11 +137,12 @@ export const githubUserSchema = z.object({
 });
 
 // Relations
-export const usersRelations = relations(users, ({ many }) => ({
+export const usersRelations = relations(users, ({ many, one }) => ({
   repositories: many(repositories),
   weeklyStats: many(weeklyStats),
   activityFeed: many(activityFeed),
   repositoryComments: many(repositoryComments),
+  progress: one(userProgress),
 }));
 
 export const repositoriesRelations = relations(repositories, ({ one, many }) => ({
@@ -161,6 +183,13 @@ export const activityFeedRelations = relations(activityFeed, ({ one }) => ({
   }),
 }));
 
+export const userProgressRelations = relations(userProgress, ({ one }) => ({
+  user: one(users, {
+    fields: [userProgress.userId],
+    references: [users.id],
+  }),
+}));
+
 // Export types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -172,4 +201,6 @@ export type ActivityFeed = typeof activityFeed.$inferSelect;
 export type InsertActivityFeed = z.infer<typeof insertActivityFeedSchema>;
 export type RepositoryComment = typeof repositoryComments.$inferSelect;
 export type InsertRepositoryComment = z.infer<typeof insertRepositoryCommentSchema>;
+export type UserProgress = typeof userProgress.$inferSelect;
+export type InsertUserProgress = z.infer<typeof insertUserProgressSchema>;
 export type GithubUser = z.infer<typeof githubUserSchema>;
