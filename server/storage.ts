@@ -212,10 +212,13 @@ export class DatabaseStorage implements IStorage {
   private getCurrentWeekIdentifier(): string {
     const now = new Date();
     const year = now.getFullYear();
-    const startOfYear = new Date(year, 0, 1);
-    const days = Math.floor((now.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
-    const weekNumber = Math.ceil((days + startOfYear.getDay() + 1) / 7);
-    return `${year}-W${weekNumber.toString().padStart(2, '0')}`;
+    
+    // Calculate week number (same logic as in scheduler.ts)
+    const firstDayOfYear = new Date(year, 0, 1);
+    const pastDaysOfYear = (now.getTime() - firstDayOfYear.getTime()) / 86400000;
+    const weekNumber = Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+    
+    return `${year}-${weekNumber.toString().padStart(2, '0')}`;
   }
 
   // Activity feed operations
