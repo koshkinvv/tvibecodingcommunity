@@ -117,6 +117,21 @@ export class Scheduler {
                   summaryGeneratedAt = new Date();
                   
                   console.log(`Generated summary for ${repo.fullName}: ${changesSummary}`);
+                  
+                  // Create activity feed entries for each commit
+                  for (const commit of newCommits.slice(0, 5)) { // Limit to 5 most recent commits
+                    await storage.createActivityFeedEntry({
+                      userId: repo.userId,
+                      repositoryId: repo.id,
+                      commitSha: commit.sha,
+                      commitMessage: commit.commit.message,
+                      filesChanged: commit.files?.length || 0,
+                      linesAdded: commit.stats?.additions || 0,
+                      linesDeleted: commit.stats?.deletions || 0,
+                      aiSummary: changesSummary,
+                      commitDate: new Date(commit.commit.author.date),
+                    });
+                  }
                 }
               } catch (error) {
                 console.error(`Error generating summary for ${repo.fullName}:`, error);

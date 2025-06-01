@@ -94,6 +94,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Activity feed route - get public activity
+  app.get("/api/activity", async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 50;
+      const activities = await storage.getActivityFeed(limit);
+      res.json(activities);
+    } catch (error) {
+      console.error("Error fetching activity feed:", error);
+      res.status(500).json({ error: "Failed to fetch activity feed" });
+    }
+  });
+
   // Get featured members for home page
   app.get("/api/members/featured", async (req, res) => {
     try {

@@ -1,8 +1,9 @@
 import {
-  users, repositories, weeklyStats,
+  users, repositories, weeklyStats, activityFeed,
   type User, type InsertUser,
   type Repository, type InsertRepository,
-  type WeeklyStat, type InsertWeeklyStat
+  type WeeklyStat, type InsertWeeklyStat,
+  type ActivityFeed, type InsertActivityFeed
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, gte, sql } from "drizzle-orm";
@@ -31,6 +32,11 @@ export interface IStorage {
   getCurrentViber(): Promise<User | undefined>;
   updateWeeklyStats(stat: InsertWeeklyStat): Promise<WeeklyStat>;
   getWeeklyStatsByUser(userId: number): Promise<WeeklyStat[]>;
+  
+  // Activity feed operations
+  createActivityFeedEntry(entry: InsertActivityFeed): Promise<ActivityFeed>;
+  getActivityFeed(limit?: number): Promise<(ActivityFeed & { user: User; repository: Repository })[]>;
+  getActivityFeedByUser(userId: number, limit?: number): Promise<ActivityFeed[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -201,6 +207,76 @@ export class DatabaseStorage implements IStorage {
     const days = Math.floor((now.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
     const weekNumber = Math.ceil((days + startOfYear.getDay() + 1) / 7);
     return `${year}-W${weekNumber.toString().padStart(2, '0')}`;
+  }
+
+  // Activity feed operations
+  async createActivityFeedEntry(entry: InsertActivityFeed): Promise<ActivityFeed> {
+    const [activityEntry] = await db
+      .insert(activityFeed)
+      .values(entry)
+      .returning();
+    return activityEntry;
+  }
+
+  async getActivityFeed(limit: number = 50): Promise<(ActivityFeed & { user: User; repository: Repository })[]> {
+    const activities = await db
+      .select({
+        id: activityFeed.id,
+        userId: activityFeed.userId,
+        repositoryId: activityFeed.repositoryId,
+        commitSha: activityFeed.commitSha,
+        commitMessage: activityFeed.commitMessage,
+        filesChanged: activityFeed.filesChanged,
+        linesAdded: activityFeed.linesAdded,
+        linesDeleted: activityFeed.linesDeleted,
+        aiSummary: activityFeed.aiSummary,
+        commitDate: activityFeed.commitDate,
+        createdAt: activityFeed.createdAt,
+        user: {
+          id: users.id,
+          githubId: users.githubId,
+          username: users.username,
+          name: users.name,
+          email: users.email,
+          avatarUrl: users.avatarUrl,
+          telegramId: users.telegramId,
+          notificationPreference: users.notificationPreference,
+          onVacation: users.onVacation,
+          vacationUntil: users.vacationUntil,
+          isAdmin: users.isAdmin,
+          lastActive: users.lastActive,
+          createdAt: users.createdAt,
+        },
+        repository: {
+          id: repositories.id,
+          userId: repositories.userId,
+          name: repositories.name,
+          fullName: repositories.fullName,
+          lastCommitDate: repositories.lastCommitDate,
+          status: repositories.status,
+          lastCommitSha: repositories.lastCommitSha,
+          changesSummary: repositories.changesSummary,
+          summaryGeneratedAt: repositories.summaryGeneratedAt,
+          createdAt: repositories.createdAt,
+        }
+      })
+      .from(activityFeed)
+      .innerJoin(users, eq(activityFeed.userId, users.id))
+      .innerJoin(repositories, eq(activityFeed.repositoryId, repositories.id))
+      .orderBy(desc(activityFeed.commitDate))
+      .limit(limit);
+
+    return activities as (ActivityFeed & { user: User; repository: Repository })[];
+  }
+
+  async getActivityFeedByUser(userId: number, limit: number = 20): Promise<ActivityFeed[]> {
+    const activities = await db
+      .select()
+      .from(activityFeed)
+      .where(eq(activityFeed.userId, userId))
+      .orderBy(desc(activityFeed.commitDate))
+      .limit(limit);
+    return activities;
   }
 }
 
