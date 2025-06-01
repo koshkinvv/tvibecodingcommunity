@@ -27,10 +27,8 @@ export function Header() {
     const isActive = location === href;
     
     return (
-      <Link href={href}>
-        <a className={`${isActive ? 'border-primary text-gray-900' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}>
-          {children}
-        </a>
+      <Link href={href} className={`${isActive ? 'border-primary text-gray-900' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}>
+        {children}
       </Link>
     );
   };
@@ -39,10 +37,8 @@ export function Header() {
     const isActive = location === href;
     
     return (
-      <Link href={href}>
-        <a className={`${isActive ? 'bg-primary-50 border-primary text-primary' : 'border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}>
-          {children}
-        </a>
+      <Link href={href} className={`${isActive ? 'bg-primary-50 border-primary text-primary' : 'border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}>
+        {children}
       </Link>
     );
   };
@@ -52,10 +48,8 @@ export function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
-            <Link href="/">
-              <a className="flex-shrink-0 flex items-center">
-                <span className="text-2xl font-bold text-primary">vibe<span className="text-gray-700">coding</span></span>
-              </a>
+            <Link href="/" className="flex-shrink-0 flex items-center">
+              <span className="text-2xl font-bold text-primary">vibe<span className="text-gray-700">coding</span></span>
             </Link>
             <nav className="hidden sm:ml-10 sm:flex space-x-8" data-onboarding="navigation">
               <NavLink href="/">Home</NavLink>
@@ -102,8 +96,8 @@ export function Header() {
                   </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link href="/profile">
-                      <a className="w-full">Your Profile</a>
+                    <Link href="/profile" className="w-full">
+                      Your Profile
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={logout}>
@@ -161,10 +155,8 @@ export function Header() {
               </div>
             </div>
             <div className="mt-3 space-y-1">
-              <Link href="/profile">
-                <a className="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100">
-                  Your Profile
-                </a>
+              <Link href="/profile" className="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100">
+                Your Profile
               </Link>
               <button
                 onClick={logout}
@@ -177,10 +169,8 @@ export function Header() {
         ) : (
           <div className="pt-4 pb-3 border-t border-gray-200">
             <div className="px-4">
-              <Link href="/login">
-                <a className="block text-center px-4 py-2 rounded-md text-base font-medium text-white bg-primary hover:bg-primary-700">
-                  Sign in with GitHub
-                </a>
+              <Link href="/login" className="block text-center px-4 py-2 rounded-md text-base font-medium text-white bg-primary hover:bg-primary-700">
+                Sign in with GitHub
               </Link>
             </div>
           </div>
