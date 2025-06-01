@@ -118,20 +118,36 @@ export class Scheduler {
                   
                   console.log(`Generated summary for ${repo.fullName}: ${changesSummary}`);
                   
-                  // Create activity feed entries for each commit
-                  for (const commit of newCommits.slice(0, 5)) { // Limit to 5 most recent commits
-                    await storage.createActivityFeedEntry({
-                      userId: repo.userId,
-                      repositoryId: repo.id,
-                      commitSha: commit.sha,
-                      commitMessage: commit.commit.message,
-                      filesChanged: commit.files?.length || 0,
-                      linesAdded: commit.stats?.additions || 0,
-                      linesDeleted: commit.stats?.deletions || 0,
-                      aiSummary: changesSummary,
-                      commitDate: new Date(commit.commit.author.date),
-                    });
-                  }
+                  // Create a single activity feed entry for the batch of commits
+                  const latestCommit = newCommits[0]; // Most recent commit
+                  const totalFilesChanged = newCommits.reduce((sum, commit) => sum + (commit.files?.length || 0), 0);
+                  const totalLinesAdded = newCommits.reduce((sum, commit) => sum + (commit.stats?.additions || 0), 0);
+                  const totalLinesDeleted = newCommits.reduce((sum, commit) => sum + (commit.stats?.deletions || 0), 0);
+                  
+                  // Prepare commit details for storage
+                  const commitDetails = newCommits.map(commit => ({
+                    sha: commit.sha,
+                    message: commit.commit.message,
+                    author: commit.commit.author.name,
+                    date: commit.commit.author.date,
+                    filesChanged: commit.files?.length || 0,
+                    linesAdded: commit.stats?.additions || 0,
+                    linesDeleted: commit.stats?.deletions || 0,
+                  }));
+                  
+                  await storage.createActivityFeedEntry({
+                    userId: repo.userId,
+                    repositoryId: repo.id,
+                    commitSha: latestCommit.sha,
+                    commitMessage: newCommits.length === 1 ? latestCommit.commit.message : `${newCommits.length} новых коммитов`,
+                    commitCount: newCommits.length,
+                    commits: commitDetails,
+                    filesChanged: totalFilesChanged,
+                    linesAdded: totalLinesAdded,
+                    linesDeleted: totalLinesDeleted,
+                    aiSummary: changesSummary,
+                    commitDate: new Date(latestCommit.commit.author.date),
+                  });
                 }
               } catch (error) {
                 console.error(`Error generating summary for ${repo.fullName}:`, error);

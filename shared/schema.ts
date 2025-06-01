@@ -53,6 +53,8 @@ export const activityFeed = pgTable("activity_feed", {
   repositoryId: integer("repository_id").notNull().references(() => repositories.id, { onDelete: "cascade" }),
   commitSha: text("commit_sha").notNull(),
   commitMessage: text("commit_message").notNull(),
+  commitCount: integer("commit_count").default(1),
+  commits: json("commits"), // Store detailed commit info
   filesChanged: integer("files_changed").default(0),
   linesAdded: integer("lines_added").default(0),
   linesDeleted: integer("lines_deleted").default(0),
