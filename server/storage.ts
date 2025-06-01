@@ -1,9 +1,10 @@
 import {
-  users, repositories, weeklyStats, activityFeed,
+  users, repositories, weeklyStats, activityFeed, repositoryComments,
   type User, type InsertUser,
   type Repository, type InsertRepository,
   type WeeklyStat, type InsertWeeklyStat,
-  type ActivityFeed, type InsertActivityFeed
+  type ActivityFeed, type InsertActivityFeed,
+  type RepositoryComment, type InsertRepositoryComment
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, gte, sql } from "drizzle-orm";
@@ -37,6 +38,14 @@ export interface IStorage {
   createActivityFeedEntry(entry: InsertActivityFeed): Promise<ActivityFeed>;
   getActivityFeed(limit?: number): Promise<(ActivityFeed & { user: User; repository: Repository })[]>;
   getActivityFeedByUser(userId: number, limit?: number): Promise<ActivityFeed[]>;
+  
+  // Repository comments operations
+  createRepositoryComment(comment: InsertRepositoryComment): Promise<RepositoryComment>;
+  getRepositoryComments(repositoryId: number): Promise<(RepositoryComment & { user: User })[]>;
+  deleteRepositoryComment(commentId: number, userId: number): Promise<boolean>;
+  
+  // Public repositories operations
+  getPublicRepositories(): Promise<(Repository & { user: User; comments: (RepositoryComment & { user: User })[] })[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -277,6 +286,89 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(activityFeed.commitDate))
       .limit(limit);
     return activities;
+  }
+
+  async createRepositoryComment(comment: InsertRepositoryComment): Promise<RepositoryComment> {
+    const [newComment] = await db
+      .insert(repositoryComments)
+      .values(comment)
+      .returning();
+    return newComment;
+  }
+
+  async getRepositoryComments(repositoryId: number): Promise<(RepositoryComment & { user: User })[]> {
+    const comments = await db
+      .select({
+        id: repositoryComments.id,
+        repositoryId: repositoryComments.repositoryId,
+        userId: repositoryComments.userId,
+        content: repositoryComments.content,
+        createdAt: repositoryComments.createdAt,
+        user: {
+          id: users.id,
+          username: users.username,
+          name: users.name,
+          avatarUrl: users.avatarUrl,
+        }
+      })
+      .from(repositoryComments)
+      .innerJoin(users, eq(repositoryComments.userId, users.id))
+      .where(eq(repositoryComments.repositoryId, repositoryId))
+      .orderBy(desc(repositoryComments.createdAt));
+    
+    return comments as (RepositoryComment & { user: User })[];
+  }
+
+  async deleteRepositoryComment(commentId: number, userId: number): Promise<boolean> {
+    const result = await db
+      .delete(repositoryComments)
+      .where(and(
+        eq(repositoryComments.id, commentId),
+        eq(repositoryComments.userId, userId)
+      ));
+    
+    return result.rowCount !== null && result.rowCount > 0;
+  }
+
+  async getPublicRepositories(): Promise<(Repository & { user: User; comments: (RepositoryComment & { user: User })[] })[]> {
+    const repos = await db
+      .select({
+        id: repositories.id,
+        userId: repositories.userId,
+        name: repositories.name,
+        fullName: repositories.fullName,
+        lastCommitDate: repositories.lastCommitDate,
+        status: repositories.status,
+        lastCommitSha: repositories.lastCommitSha,
+        changesSummary: repositories.changesSummary,
+        summaryGeneratedAt: repositories.summaryGeneratedAt,
+        description: repositories.description,
+        descriptionGeneratedAt: repositories.descriptionGeneratedAt,
+        isPublic: repositories.isPublic,
+        createdAt: repositories.createdAt,
+        user: {
+          id: users.id,
+          username: users.username,
+          name: users.name,
+          avatarUrl: users.avatarUrl,
+        }
+      })
+      .from(repositories)
+      .innerJoin(users, eq(repositories.userId, users.id))
+      .where(eq(repositories.isPublic, true))
+      .orderBy(desc(repositories.createdAt));
+
+    const reposWithComments = await Promise.all(
+      repos.map(async (repo) => {
+        const comments = await this.getRepositoryComments(repo.id);
+        return {
+          ...repo,
+          comments
+        };
+      })
+    );
+
+    return reposWithComments as (Repository & { user: User; comments: (RepositoryComment & { user: User })[] })[];
   }
 }
 

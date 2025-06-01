@@ -13,6 +13,7 @@ export interface CommitChangesSummary {
 export class GeminiService {
   async generateProjectDescription(repository: any, user: any): Promise<string> {
     try {
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
       const prompt = `
 Создай краткое и понятное описание проекта на русском языке для сообщества разработчиков.
 
