@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'wouter';
 import { apiRequest } from '@/lib/queryClient';
 import { StatusBadge } from '@/components/status-badge';
+import { RepositorySummary } from '@/components/repository-summary';
 import { Repository } from '@/lib/types';
 import { Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -177,64 +178,43 @@ export function RepositoryList({ userId, readOnly = false }: RepositoryListProps
     <div className="space-y-4">
       {repositories && repositories.length > 0 ? (
         repositories.map(repo => (
-          <Card key={repo.id} className="bg-white shadow overflow-hidden">
-            <CardContent className="px-4 py-5 sm:p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="text-lg font-medium text-gray-900">
-                    <a 
-                      href={`https://github.com/${repo.fullName}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary hover:underline"
+          <div key={repo.id} className="space-y-4">
+            <RepositorySummary repository={repo} />
+            
+            {!readOnly && (
+              <div className="flex justify-end mt-2">
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
                     >
-                      {repo.name}
-                    </a>
-                  </h4>
-                  <p className="mt-1 text-sm text-gray-500">
-                    Last commit: <span className="font-medium">
-                      {repo.lastCommitDate 
-                        ? formatRelativeTime(new Date(repo.lastCommitDate)) 
-                        : 'unknown'}
-                    </span>
-                  </p>
-                </div>
-                <div className="flex space-x-3">
-                  <StatusBadge status={repo.status} />
-                  
-                  {!readOnly && (
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <button 
-                          type="button" 
-                          className="inline-flex items-center p-1 border border-transparent rounded-full shadow-sm text-gray-400 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
-                          onClick={() => setRepositoryToDelete(repo)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This will remove the repository "{repo.name}" from your profile. This action cannot be undone.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction 
-                            onClick={() => deleteMutation.mutate(repo.id)}
-                          >
-                            {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  )}
-                </div>
+                      <Trash2 className="h-4 w-4 mr-1" />
+                      Удалить
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Подтвердите действие</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Это удалит репозиторий "{repo.name}" из вашего профиля. Это действие нельзя отменить.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Отмена</AlertDialogCancel>
+                      <AlertDialogAction 
+                        onClick={() => deleteMutation.mutate(repo.id)}
+                        className="bg-red-600 hover:bg-red-700"
+                      >
+                        {deleteMutation.isPending ? 'Удаление...' : 'Удалить'}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
-            </CardContent>
-          </Card>
+            )}
+          </div>
         ))
       ) : (
         <Card className="bg-white shadow">

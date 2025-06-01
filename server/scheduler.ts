@@ -86,16 +86,52 @@ export class Scheduler {
         // Check each repository
         for (const repo of repositories) {
           try {
-            // Get last commit date
-            const lastCommitDate = await githubClient.getLastCommitDate(repo);
+            // Get latest commit information
+            const latestCommit = await githubClient.getLatestCommit(repo.fullName);
+            
+            if (!latestCommit) {
+              console.log(`No commits found for repository ${repo.fullName}`);
+              continue;
+            }
+
+            const lastCommitDate = new Date(latestCommit.commit.author.date);
+            const newCommitSha = latestCommit.sha;
             
             // Calculate repository status
             const status = githubClient.calculateRepositoryStatus(lastCommitDate);
             
-            // Update repository with new status and last commit date
+            // Check if there are new commits since last check
+            let changesSummary = repo.changesSummary;
+            let summaryGeneratedAt = repo.summaryGeneratedAt;
+            
+            if (repo.lastCommitSha !== newCommitSha) {
+              console.log(`New commits detected in ${repo.fullName}`);
+              
+              try {
+                // Get commits since last check
+                const newCommits = await githubClient.getCommitsSince(repo.fullName, repo.lastCommitSha);
+                
+                if (newCommits.length > 0) {
+                  // Generate AI summary of changes
+                  changesSummary = await openaiService.generateChangesSummary(newCommits);
+                  summaryGeneratedAt = new Date();
+                  
+                  console.log(`Generated summary for ${repo.fullName}: ${changesSummary}`);
+                }
+              } catch (error) {
+                console.error(`Error generating summary for ${repo.fullName}:`, error);
+                changesSummary = "Не удалось проанализировать изменения";
+                summaryGeneratedAt = new Date();
+              }
+            }
+            
+            // Update repository with new information
             await storage.updateRepository(repo.id, {
               status,
-              lastCommitDate
+              lastCommitDate,
+              lastCommitSha: newCommitSha,
+              changesSummary,
+              summaryGeneratedAt
             });
             
             // Track warning/inactive status

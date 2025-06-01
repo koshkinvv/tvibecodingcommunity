@@ -25,6 +25,9 @@ export interface Repository {
   fullName: string;
   lastCommitDate: string | null;
   status: RepositoryStatus;
+  lastCommitSha: string | null;
+  changesSummary: string | null;
+  summaryGeneratedAt: string | null;
   createdAt: string;
 }
 
