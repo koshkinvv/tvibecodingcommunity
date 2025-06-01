@@ -132,6 +132,9 @@ export default function ProgressPage() {
                     </CardContent>
                   </Card>
                 )}
+                
+                {/* Achievements Widget */}
+                <AchievementsWidget />
               </div>
 
               {/* Top 5 Leaderboard */}
