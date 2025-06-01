@@ -6,7 +6,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { UserProgressCard } from '@/components/progress/user-progress-card';
 import { Leaderboard } from '@/components/progress/leaderboard';
-import { AchievementsWidget } from '@/components/progress/achievements-widget';
 import { Trophy, Users, Target, TrendingUp, RefreshCw } from 'lucide-react';
 
 interface LeaderboardEntry {
@@ -132,9 +131,6 @@ export default function ProgressPage() {
                     </CardContent>
                   </Card>
                 )}
-                
-                {/* Achievements Widget */}
-                <AchievementsWidget />
               </div>
 
               {/* Top 5 Leaderboard */}

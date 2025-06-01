@@ -199,16 +199,6 @@ export class Scheduler {
         if (activeRepos.length > 0) {
           // If user has any active repositories, consider them active
           await storage.updateUser(user.id, { lastActive: new Date() });
-          
-          // Check and award achievements for this user
-          try {
-            const newAchievements = await storage.checkAndAwardAchievements(user.id);
-            if (newAchievements.length > 0) {
-              console.log(`User ${user.username} earned ${newAchievements.length} new achievements`);
-            }
-          } catch (error) {
-            console.error(`Error checking achievements for user ${user.username}:`, error);
-          }
         }
       }
       
