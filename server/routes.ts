@@ -790,37 +790,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Admin - trigger manual repository check
-  app.post("/api/admin/check-repositories", auth.isAdmin, async (req, res) => {
-    try {
-      const adminUser = req.user as any;
-      console.log(`Admin ${adminUser.username} triggered manual repository check`);
-      
-      // Import scheduler to trigger manual check
-      const { scheduler } = await import('./scheduler');
-      
-      // Trigger the repository check manually
-      const checkResults = await triggerManualRepositoryCheck();
-      
-      // Ensure checkResults is properly defined
-      if (!checkResults) {
-        throw new Error('Repository check returned undefined results');
-      }
-      
-      res.json({
-        success: true,
-        message: 'Repository check completed successfully',
-        results: checkResults
-      });
-    } catch (error) {
-      console.error("Error during manual repository check:", error);
-      res.status(500).json({ 
-        error: "Failed to complete repository check",
-        details: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  });
-
   // Helper function for manual repository check
   async function triggerManualRepositoryCheck() {
     const results = {
@@ -957,7 +926,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return results;
   }
 
-
+  // Admin - trigger manual repository check
+  app.post("/api/admin/check-repositories", auth.isAdmin, async (req, res) => {
+    try {
+      const adminUser = req.user as any;
+      console.log(`Admin ${adminUser.username} triggered manual repository check`);
+      
+      // Trigger the repository check manually
+      const checkResults = await triggerManualRepositoryCheck();
+      
+      // Ensure checkResults is properly defined
+      if (!checkResults) {
+        throw new Error('Repository check returned undefined results');
+      }
+      
+      res.json({
+        success: true,
+        message: 'Repository check completed successfully',
+        results: checkResults
+      });
+    } catch (error) {
+      console.error("Error during manual repository check:", error);
+      res.status(500).json({ 
+        error: "Failed to complete repository check",
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
   
   // Verify Telegram bot integration
   app.post("/api/telegram/verify", auth.isAuthenticated, async (req, res) => {
