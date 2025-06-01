@@ -198,9 +198,27 @@ function ActivityCard({ activity }: { activity: ActivityItem }) {
 }
 
 export default function ActivityPage() {
+  const { user, isLoading: authLoading } = useAuth();
   const { data: activities, isLoading, error } = useQuery<ActivityItem[]>({
     queryKey: ["/api/activity"],
   });
+
+  // Redirect to login if not authenticated
+  if (!authLoading && !user) {
+    return (
+      <div className="max-w-4xl mx-auto p-4 sm:p-6">
+        <Card>
+          <CardContent className="p-6 text-center">
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Authentication Required</h2>
+            <p className="text-gray-600 mb-4">Please log in to view community activity.</p>
+            <Button asChild>
+              <a href="/api/auth/github">Login with GitHub</a>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   // Show loading state while checking authentication and fetching data
   if (isLoading) {
