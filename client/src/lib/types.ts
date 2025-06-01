@@ -28,6 +28,9 @@ export interface Repository {
   lastCommitSha: string | null;
   changesSummary: string | null;
   summaryGeneratedAt: string | null;
+  description: string | null;
+  descriptionGeneratedAt: string | null;
+  isPublic: boolean;
   createdAt: string;
 }
 

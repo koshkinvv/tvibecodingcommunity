@@ -57,7 +57,12 @@ export function MemberCard({ member }: MemberCardProps) {
                   >
                     {repo.name}
                   </a>
-                  <p className="text-gray-500">
+                  {repo.description && (
+                    <p className="text-gray-600 text-sm mt-1 line-clamp-2">
+                      {repo.description}
+                    </p>
+                  )}
+                  <p className="text-gray-500 text-xs mt-1">
                     Last commit: {repo.lastCommitDate 
                       ? formatRelativeTime(new Date(repo.lastCommitDate)) 
                       : 'unknown'}

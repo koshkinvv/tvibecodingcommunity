@@ -84,11 +84,7 @@ const CommentSection = ({ repository }: { repository: Repository }) => {
 
   const addCommentMutation = useMutation({
     mutationFn: async (content: string) => {
-      return await apiRequest(`/api/repositories/${repository.id}/comments`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content })
-      });
+      return await apiRequest(`/api/repositories/${repository.id}/comments`, "POST", { content });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
@@ -110,9 +106,7 @@ const CommentSection = ({ repository }: { repository: Repository }) => {
 
   const deleteCommentMutation = useMutation({
     mutationFn: async (commentId: number) => {
-      return await apiRequest(`/api/comments/${commentId}`, {
-        method: "DELETE"
-      });
+      return await apiRequest(`/api/comments/${commentId}`, "DELETE");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
