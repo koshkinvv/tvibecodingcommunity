@@ -58,6 +58,7 @@ export function Header() {
             <nav className="hidden sm:ml-10 sm:flex space-x-8">
               <NavLink href="/">Home</NavLink>
               {user && <NavLink href="/activity">Activity</NavLink>}
+              {user && <NavLink href="/insights">Insights</NavLink>}
               {user && <NavLink href="/profile">Profile</NavLink>}
               {user && <NavLink href="/community">Community</NavLink>}
               {user?.isAdmin && <NavLink href="/admin">Admin</NavLink>}
@@ -119,6 +120,7 @@ export function Header() {
         <div className="pt-2 pb-3 space-y-1">
           <MobileNavLink href="/">Home</MobileNavLink>
           {user && <MobileNavLink href="/activity">Activity</MobileNavLink>}
+          {user && <MobileNavLink href="/insights">Insights</MobileNavLink>}
           {user && <MobileNavLink href="/profile">Profile</MobileNavLink>}
           {user && <MobileNavLink href="/community">Community</MobileNavLink>}
           {user?.isAdmin && <MobileNavLink href="/admin">Admin</MobileNavLink>}

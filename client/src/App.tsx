@@ -12,6 +12,7 @@ import ProfilePage from "@/pages/profile";
 import CommunityPage from "@/pages/community";
 import ActivityPage from "@/pages/activity";
 import AdminPage from "@/pages/admin";
+import ProjectInsightsPage from "@/pages/project-insights";
 import { useAuth } from "@/hooks/use-auth";
 
 function Router() {
@@ -32,6 +33,9 @@ function Router() {
       <Route path="/login" component={LoginPage} />
       <Route path="/profile">
         {user ? <ProfilePage /> : <LoginPage />}
+      </Route>
+      <Route path="/insights">
+        {user ? <ProjectInsightsPage /> : <LoginPage />}
       </Route>
       <Route path="/community" component={CommunityPage} />
       <Route path="/activity" component={ActivityPage} />
