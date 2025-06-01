@@ -94,8 +94,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Activity feed route - get public activity
-  app.get("/api/activity", async (req, res) => {
+  // Activity feed route - requires authentication
+  app.get("/api/activity", auth.isAuthenticated, async (req, res) => {
     try {
       const limit = parseInt(req.query.limit as string) || 50;
       const activities = await storage.getActivityFeed(limit);

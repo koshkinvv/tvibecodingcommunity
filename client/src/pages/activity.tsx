@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { formatRelativeTime } from "@/lib/utils";
 import { GitCommit, FileText, Plus, Minus, ChevronDown, ChevronRight } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
 
 interface CommitDetail {
   sha: string;
@@ -49,30 +50,32 @@ function ActivityCard({ activity }: { activity: ActivityItem }) {
 
   return (
     <Card className="hover:shadow-md transition-shadow">
-      <CardContent className="p-6">
-        <div className="flex items-start space-x-4">
-          <Avatar className="h-10 w-10">
+      <CardContent className="p-4 sm:p-6">
+        <div className="flex items-start space-x-3 sm:space-x-4">
+          <Avatar className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0">
             <AvatarImage 
               src={activity.user.avatarUrl || ''} 
               alt={activity.user.username} 
             />
-            <AvatarFallback>
+            <AvatarFallback className="text-xs sm:text-sm">
               {activity.user.name?.substring(0, 2) || activity.user.username.substring(0, 2)}
             </AvatarFallback>
           </Avatar>
 
           <div className="flex-1 min-w-0">
-            <div className="flex items-center space-x-2 mb-2">
-              <span className="font-medium text-gray-900">
-                {activity.user.name || activity.user.username}
-              </span>
-              <span className="text-gray-500">
-                {activity.commitCount === 1 ? 'committed to' : `made ${activity.commitCount} commits to`}
-              </span>
-              <Badge variant="outline" className="text-xs">
-                {activity.repository.name}
-              </Badge>
-              <span className="text-gray-400 text-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-2 mb-2">
+              <div className="flex items-center space-x-2 flex-wrap">
+                <span className="font-medium text-gray-900 text-sm sm:text-base">
+                  {activity.user.name || activity.user.username}
+                </span>
+                <span className="text-gray-500 text-xs sm:text-sm">
+                  {activity.commitCount === 1 ? 'committed to' : `made ${activity.commitCount} commits to`}
+                </span>
+                <Badge variant="outline" className="text-xs">
+                  {activity.repository.name}
+                </Badge>
+              </div>
+              <span className="text-gray-400 text-xs sm:text-sm">
                 {formatRelativeTime(new Date(activity.commitDate))}
               </span>
             </div>
@@ -87,8 +90,8 @@ function ActivityCard({ activity }: { activity: ActivityItem }) {
               </div>
             )}
 
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center space-x-4 text-xs text-gray-500">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 space-y-2 sm:space-y-0">
+              <div className="flex items-center flex-wrap gap-2 sm:gap-4 text-xs text-gray-500">
                 <div className="flex items-center space-x-1">
                   <FileText className="h-3 w-3" />
                   <span>{activity.filesChanged} files</span>
@@ -110,16 +113,18 @@ function ActivityCard({ activity }: { activity: ActivityItem }) {
               {activity.commits && activity.commits.length > 1 && (
                 <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
                   <CollapsibleTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-6 px-2 text-xs">
+                    <Button variant="ghost" size="sm" className="h-8 px-3 text-xs sm:h-6 sm:px-2">
                       {isExpanded ? (
                         <>
                           <ChevronDown className="h-3 w-3 mr-1" />
-                          Hide commits
+                          <span className="hidden sm:inline">Hide commits</span>
+                          <span className="sm:hidden">Hide</span>
                         </>
                       ) : (
                         <>
                           <ChevronRight className="h-3 w-3 mr-1" />
-                          Show {activity.commitCount} commits
+                          <span className="hidden sm:inline">Show {activity.commitCount} commits</span>
+                          <span className="sm:hidden">{activity.commitCount} commits</span>
                         </>
                       )}
                     </Button>
@@ -133,15 +138,17 @@ function ActivityCard({ activity }: { activity: ActivityItem }) {
                 <CollapsibleContent className="space-y-2">
                   <div className="border-t pt-3">
                     {activity.commits.map((commit, index) => (
-                      <div key={commit.sha} className="flex items-start space-x-3 py-2 border-l-2 border-gray-200 pl-3 ml-2">
+                      <div key={commit.sha} className="flex items-start space-x-2 sm:space-x-3 py-2 border-l-2 border-gray-200 pl-2 sm:pl-3 ml-1 sm:ml-2">
                         <div className="w-2 h-2 bg-gray-400 rounded-full mt-2 flex-shrink-0"></div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm text-gray-700 mb-1">{commit.message}</p>
-                          <div className="flex items-center space-x-3 text-xs text-gray-500">
-                            <span className="font-mono">{commit.sha.substring(0, 7)}</span>
-                            <span>{commit.author}</span>
-                            <span>{formatRelativeTime(new Date(commit.date))}</span>
+                          <p className="text-sm text-gray-700 mb-1 break-words">{commit.message}</p>
+                          <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-3 text-xs text-gray-500">
                             <div className="flex items-center space-x-2">
+                              <span className="font-mono">{commit.sha.substring(0, 7)}</span>
+                              <span>{commit.author}</span>
+                            </div>
+                            <span className="hidden sm:inline">{formatRelativeTime(new Date(commit.date))}</span>
+                            <div className="flex items-center flex-wrap gap-2 sm:gap-2">
                               {commit.filesChanged > 0 && (
                                 <span className="flex items-center space-x-1">
                                   <FileText className="h-3 w-3" />
@@ -195,11 +202,12 @@ export default function ActivityPage() {
     queryKey: ["/api/activity"],
   });
 
+  // Show loading state while checking authentication and fetching data
   if (isLoading) {
     return (
-      <div className="max-w-4xl mx-auto p-6">
-        <div className="space-y-6">
-          <h1 className="text-2xl font-bold text-gray-900">Community Activity</h1>
+      <div className="max-w-4xl mx-auto p-4 sm:p-6">
+        <div className="space-y-4 sm:space-y-6">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Community Activity</h1>
           <div className="space-y-4">
             {Array(5).fill(0).map((_, i) => (
               <Card key={i}>
