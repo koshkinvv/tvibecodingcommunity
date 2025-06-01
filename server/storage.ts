@@ -1,10 +1,11 @@
 import {
-  users, repositories, weeklyStats, activityFeed, repositoryComments,
+  users, repositories, weeklyStats, activityFeed, repositoryComments, userProgress,
   type User, type InsertUser,
   type Repository, type InsertRepository,
   type WeeklyStat, type InsertWeeklyStat,
   type ActivityFeed, type InsertActivityFeed,
-  type RepositoryComment, type InsertRepositoryComment
+  type RepositoryComment, type InsertRepositoryComment,
+  type UserProgress, type InsertUserProgress
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, gte, sql } from "drizzle-orm";
@@ -46,6 +47,12 @@ export interface IStorage {
   
   // Public repositories operations
   getPublicRepositories(): Promise<(Repository & { user: User; comments: (RepositoryComment & { user: User })[] })[]>;
+  
+  // User progress operations
+  getUserProgress(userId: number): Promise<UserProgress | undefined>;
+  createUserProgress(progress: InsertUserProgress): Promise<UserProgress>;
+  updateUserProgress(userId: number, progress: Partial<UserProgress>): Promise<UserProgress | undefined>;
+  updateUserProgressStats(userId: number, stats: { commits?: number; activeDays?: number; currentStreak?: number; experience?: number }): Promise<UserProgress | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -372,6 +379,68 @@ export class DatabaseStorage implements IStorage {
     );
 
     return reposWithComments as (Repository & { user: User; comments: (RepositoryComment & { user: User })[] })[];
+  }
+
+  // User progress operations
+  async getUserProgress(userId: number): Promise<UserProgress | undefined> {
+    const [progress] = await db.select().from(userProgress).where(eq(userProgress.userId, userId));
+    return progress || undefined;
+  }
+
+  async createUserProgress(progress: InsertUserProgress): Promise<UserProgress> {
+    const [newProgress] = await db
+      .insert(userProgress)
+      .values(progress)
+      .returning();
+    return newProgress;
+  }
+
+  async updateUserProgress(userId: number, progressData: Partial<UserProgress>): Promise<UserProgress | undefined> {
+    const [updated] = await db
+      .update(userProgress)
+      .set({ ...progressData, updatedAt: new Date() })
+      .where(eq(userProgress.userId, userId))
+      .returning();
+    return updated || undefined;
+  }
+
+  async updateUserProgressStats(userId: number, stats: { commits?: number; activeDays?: number; currentStreak?: number; experience?: number }): Promise<UserProgress | undefined> {
+    // Get current progress or create if doesn't exist
+    let currentProgress = await this.getUserProgress(userId);
+    
+    if (!currentProgress) {
+      currentProgress = await this.createUserProgress({
+        userId,
+        totalCommits: stats.commits || 0,
+        activeDays: stats.activeDays || 0,
+        currentStreak: stats.currentStreak || 0,
+        longestStreak: stats.currentStreak || 0,
+        level: 1,
+        experience: stats.experience || 0,
+        lastActivityDate: new Date(),
+        badges: []
+      });
+    }
+
+    // Calculate new stats
+    const newTotalCommits = currentProgress.totalCommits + (stats.commits || 0);
+    const newActiveDays = Math.max(currentProgress.activeDays, stats.activeDays || 0);
+    const newCurrentStreak = stats.currentStreak !== undefined ? stats.currentStreak : currentProgress.currentStreak;
+    const newLongestStreak = Math.max(currentProgress.longestStreak, newCurrentStreak);
+    const newExperience = currentProgress.experience + (stats.experience || 0);
+    
+    // Calculate level based on experience (level up every 100 XP)
+    const newLevel = Math.floor(newExperience / 100) + 1;
+
+    return await this.updateUserProgress(userId, {
+      totalCommits: newTotalCommits,
+      activeDays: newActiveDays,
+      currentStreak: newCurrentStreak,
+      longestStreak: newLongestStreak,
+      level: newLevel,
+      experience: newExperience,
+      lastActivityDate: new Date()
+    });
   }
 }
 
