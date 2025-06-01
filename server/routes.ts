@@ -768,11 +768,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
               
               if (repo.lastCommitSha !== newCommitSha && repo.lastCommitSha) {
                 try {
-                  const { openaiService } = await import('./openai');
+                  const { geminiService } = await import('./gemini');
                   const newCommits = await githubClient.getCommitsSince(repo.fullName, repo.lastCommitSha || undefined);
                   
                   if (newCommits.length > 0) {
-                    changesSummary = await openaiService.generateChangesSummary(newCommits);
+                    changesSummary = await geminiService.generateChangesSummary(newCommits);
                     summaryGeneratedAt = new Date();
                   }
                 } catch (summaryError) {

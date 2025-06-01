@@ -113,7 +113,7 @@ export class Scheduler {
                 
                 if (newCommits.length > 0) {
                   // Generate AI summary of changes
-                  changesSummary = await openaiService.generateChangesSummary(newCommits);
+                  changesSummary = await geminiService.generateChangesSummary(newCommits);
                   summaryGeneratedAt = new Date();
                   
                   console.log(`Generated summary for ${repo.fullName}: ${changesSummary}`);
