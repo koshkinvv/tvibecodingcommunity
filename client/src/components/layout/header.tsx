@@ -63,6 +63,7 @@ export function Header() {
               {user && <NavLink href="/insights">Insights</NavLink>}
               {user && <NavLink href="/profile">Profile</NavLink>}
               {user && <NavLink href="/community">Community</NavLink>}
+              {user && <NavLink href="/projects">Projects</NavLink>}
               {user?.isAdmin && <NavLink href="/admin">Admin</NavLink>}
             </nav>
           </div>
@@ -139,6 +140,7 @@ export function Header() {
           {user && <MobileNavLink href="/insights">Insights</MobileNavLink>}
           {user && <MobileNavLink href="/profile">Profile</MobileNavLink>}
           {user && <MobileNavLink href="/community">Community</MobileNavLink>}
+          {user && <MobileNavLink href="/projects">Projects</MobileNavLink>}
           {user?.isAdmin && <MobileNavLink href="/admin">Admin</MobileNavLink>}
         </div>
         {user ? (
