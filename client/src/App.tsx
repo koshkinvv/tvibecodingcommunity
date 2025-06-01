@@ -53,6 +53,15 @@ function Router() {
       </Route>
       <Route path="/activity" component={ActivityPage} />
       <Route path="/progress" component={ProgressPage} />
+      <Route path="/achievements">
+        {user ? <AchievementsPage /> : <LoginPage />}
+      </Route>
+      <Route path="/challenges">
+        {user ? <ChallengesPage /> : <LoginPage />}
+      </Route>
+      <Route path="/mentorship">
+        {user ? <MentorshipPage /> : <LoginPage />}
+      </Route>
       <Route path="/admin">
         {user?.isAdmin ? <AdminPage /> : <NotFound />}
       </Route>
