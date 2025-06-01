@@ -1,6 +1,7 @@
 import { githubClient } from './github';
 import { storage } from './storage';
 import { getNotificationService } from './notification';
+import { openaiService } from './openai';
 
 // Class to handle scheduled tasks
 export class Scheduler {

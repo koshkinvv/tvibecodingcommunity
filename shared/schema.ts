@@ -29,6 +29,9 @@ export const repositories = pgTable("repositories", {
   fullName: text("full_name").notNull(), // username/repo-name
   lastCommitDate: timestamp("last_commit_date"),
   status: text("status").notNull().default("pending"), // 'active', 'warning', 'inactive', 'pending'
+  lastCommitSha: text("last_commit_sha"), // Для отслеживания изменений
+  changesSummary: text("changes_summary"), // AI-генерированное описание изменений
+  summaryGeneratedAt: timestamp("summary_generated_at"), // Когда было создано описание
   createdAt: timestamp("created_at").defaultNow(),
 });
 

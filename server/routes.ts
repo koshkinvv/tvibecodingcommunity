@@ -780,30 +780,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return results;
   }
 
-  // Development endpoint to make current user admin (remove in production)
-  app.post("/api/dev/make-admin", auth.isAuthenticated, async (req, res) => {
-    try {
-      const user = req.user as any;
-      
-      // Update user to admin
-      const updatedUser = await storage.updateUser(user.id, {
-        isAdmin: true
-      });
-      
-      if (updatedUser) {
-        console.log(`User ${user.username} has been granted admin privileges via dev endpoint`);
-        res.json({ 
-          success: true, 
-          message: `User ${user.username} is now an administrator` 
-        });
-      } else {
-        res.status(500).json({ error: 'Failed to update user' });
-      }
-    } catch (error) {
-      console.error("Error making user admin:", error);
-      res.status(500).json({ error: "Failed to grant admin privileges" });
-    }
-  });
+
   
   // Verify Telegram bot integration
   app.post("/api/telegram/verify", auth.isAuthenticated, async (req, res) => {

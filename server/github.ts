@@ -90,6 +90,71 @@ export class GitHubClient {
     return commits.length > 0 ? commits[0] : null;
   }
 
+  async getCommitsSince(fullName: string, sinceCommitSha?: string): Promise<any[]> {
+    try {
+      let url = `${this.baseUrl}/repos/${fullName}/commits`;
+      const params = new URLSearchParams();
+      
+      if (sinceCommitSha) {
+        // Получаем коммиты с определенной даты
+        const sinceCommitResponse = await fetch(`${this.baseUrl}/repos/${fullName}/commits/${sinceCommitSha}`, {
+          headers: this.getHeaders()
+        });
+        
+        if (sinceCommitResponse.ok) {
+          const sinceCommit = await sinceCommitResponse.json();
+          params.append('since', sinceCommit.commit.author.date);
+        }
+      } else {
+        // Если нет предыдущего коммита, берем последние 10 коммитов
+        params.append('per_page', '10');
+      }
+
+      if (params.toString()) {
+        url += '?' + params.toString();
+      }
+
+      const response = await fetch(url, {
+        headers: this.getHeaders()
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch commits: ${response.status}`);
+      }
+
+      const commits = await response.json();
+      
+      // Фильтруем коммиты, исключая sinceCommitSha если он есть
+      const filteredCommits = sinceCommitSha 
+        ? commits.filter((commit: any) => commit.sha !== sinceCommitSha)
+        : commits;
+
+      // Получаем детальную информацию о каждом коммите
+      const detailedCommits = await Promise.all(
+        filteredCommits.slice(0, 5).map(async (commit: any) => {
+          try {
+            const detailResponse = await fetch(`${this.baseUrl}/repos/${fullName}/commits/${commit.sha}`, {
+              headers: this.getHeaders()
+            });
+            
+            if (detailResponse.ok) {
+              return await detailResponse.json();
+            }
+            return commit;
+          } catch (error) {
+            console.error(`Error fetching commit details for ${commit.sha}:`, error);
+            return commit;
+          }
+        })
+      );
+
+      return detailedCommits;
+    } catch (error) {
+      console.error(`Error fetching commits for ${fullName}:`, error);
+      return [];
+    }
+  }
+
   async checkRepositoryExists(fullName: string): Promise<boolean> {
     try {
       const response = await fetch(`${this.baseUrl}/repos/${fullName}`, {
