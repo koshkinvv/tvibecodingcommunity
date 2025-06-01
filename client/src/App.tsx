@@ -14,6 +14,7 @@ import CommunityPage from "@/pages/community";
 import ActivityPage from "@/pages/activity";
 import AdminPage from "@/pages/admin";
 import ProjectInsightsPage from "@/pages/project-insights";
+import ProjectsPage from "@/pages/projects";
 import { useAuth } from "@/hooks/use-auth";
 
 function Router() {
@@ -39,6 +40,9 @@ function Router() {
         {user ? <ProjectInsightsPage /> : <LoginPage />}
       </Route>
       <Route path="/community" component={CommunityPage} />
+      <Route path="/projects">
+        {user ? <ProjectsPage /> : <LoginPage />}
+      </Route>
       <Route path="/activity" component={ActivityPage} />
       <Route path="/admin">
         {user?.isAdmin ? <AdminPage /> : <NotFound />}
