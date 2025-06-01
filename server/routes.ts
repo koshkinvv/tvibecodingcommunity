@@ -1012,8 +1012,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     });
 
-    // Public projects page - open to all users
-    app.get("/api/projects", async (req, res) => {
+    // Public projects page - requires authentication to view
+    app.get("/api/projects", auth.isAuthenticated, async (req, res) => {
       try {
         const projects = await storage.getPublicRepositories();
         res.json(projects);

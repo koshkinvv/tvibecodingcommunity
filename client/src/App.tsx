@@ -40,7 +40,9 @@ function Router() {
         {user ? <ProjectInsightsPage /> : <LoginPage />}
       </Route>
       <Route path="/community" component={CommunityPage} />
-      <Route path="/projects" component={ProjectsPage} />
+      <Route path="/projects">
+        {user ? <ProjectsPage /> : <LoginPage />}
+      </Route>
       <Route path="/activity" component={ActivityPage} />
       <Route path="/admin">
         {user?.isAdmin ? <AdminPage /> : <NotFound />}
