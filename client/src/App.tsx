@@ -10,6 +10,7 @@ import HomePage from "@/pages/home";
 import LoginPage from "@/pages/login";
 import ProfilePage from "@/pages/profile";
 import CommunityPage from "@/pages/community";
+import ActivityPage from "@/pages/activity";
 import AdminPage from "@/pages/admin";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -33,6 +34,7 @@ function Router() {
         {user ? <ProfilePage /> : <LoginPage />}
       </Route>
       <Route path="/community" component={CommunityPage} />
+      <Route path="/activity" component={ActivityPage} />
       <Route path="/admin">
         {user?.isAdmin ? <AdminPage /> : <NotFound />}
       </Route>

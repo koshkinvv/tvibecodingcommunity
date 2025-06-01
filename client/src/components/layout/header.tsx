@@ -57,6 +57,7 @@ export function Header() {
             </Link>
             <nav className="hidden sm:ml-10 sm:flex space-x-8">
               <NavLink href="/">Home</NavLink>
+              <NavLink href="/activity">Activity</NavLink>
               {user && <NavLink href="/profile">Profile</NavLink>}
               {user && <NavLink href="/community">Community</NavLink>}
               {user?.isAdmin && <NavLink href="/admin">Admin</NavLink>}
@@ -117,6 +118,7 @@ export function Header() {
       <div className={`sm:hidden ${mobileMenuOpen ? '' : 'hidden'}`} id="mobile-menu">
         <div className="pt-2 pb-3 space-y-1">
           <MobileNavLink href="/">Home</MobileNavLink>
+          <MobileNavLink href="/activity">Activity</MobileNavLink>
           {user && <MobileNavLink href="/profile">Profile</MobileNavLink>}
           {user && <MobileNavLink href="/community">Community</MobileNavLink>}
           {user?.isAdmin && <MobileNavLink href="/admin">Admin</MobileNavLink>}
