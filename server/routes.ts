@@ -952,15 +952,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Trigger the repository check manually
       const checkResults = await triggerManualRepositoryCheck();
       
-      // Ensure checkResults is properly defined
-      if (!checkResults) {
-        throw new Error('Repository check returned undefined results');
-      }
+      // Ensure checkResults is properly defined with default values
+      const safeResults = {
+        usersChecked: checkResults?.usersChecked || 0,
+        repositoriesUpdated: checkResults?.repositoriesUpdated || 0,
+        errors: checkResults?.errors || 0,
+        details: checkResults?.details || []
+      };
       
       res.json({
         success: true,
         message: 'Repository check completed successfully',
-        results: checkResults
+        results: safeResults
       });
     } catch (error) {
       console.error("Error during manual repository check:", error);

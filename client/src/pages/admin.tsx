@@ -26,20 +26,22 @@ export default function AdminPage() {
       return apiRequest('POST', '/api/admin/check-repositories');
     },
     onSuccess: (data: any) => {
-      setLastCheckResults(data.results);
+      const results = data.results || { usersChecked: 0, repositoriesUpdated: 0, errors: 0, details: [] };
+      setLastCheckResults(results);
       toast({
         title: 'Repository check completed',
-        description: `Checked ${data.results.usersChecked} users, updated ${data.results.repositoriesUpdated} repositories`,
+        description: `Checked ${results.usersChecked} users, updated ${results.repositoriesUpdated} repositories`,
       });
       // Refresh stats and community data
       queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
       queryClient.invalidateQueries({ queryKey: ['/api/community'] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      console.error('Repository check error:', error);
       toast({
         title: 'Repository check failed',
-        description: `Failed to complete repository check: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        description: error.message || 'Failed to complete repository check',
         variant: 'destructive'
       });
     },
