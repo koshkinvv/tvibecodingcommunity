@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLocation, Link } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
+import { useOnboarding } from '@/hooks/use-onboarding';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,11 +10,12 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu } from 'lucide-react';
+import { Menu, HelpCircle } from 'lucide-react';
 
 export function Header() {
   const [location] = useLocation();
   const { user, logout } = useAuth();
+  const { startOnboarding, resetOnboarding } = useOnboarding();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Close mobile menu when location changes
@@ -64,7 +66,21 @@ export function Header() {
               {user?.isAdmin && <NavLink href="/admin">Admin</NavLink>}
             </nav>
           </div>
-          <div className="hidden sm:ml-6 sm:flex sm:items-center" data-onboarding="profile-menu">
+          <div className="hidden sm:ml-6 sm:flex sm:items-center space-x-3" data-onboarding="profile-menu">
+            {/* Help button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                resetOnboarding();
+                setTimeout(startOnboarding, 100);
+              }}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              <HelpCircle className="h-5 w-5" />
+              <span className="ml-1 hidden lg:inline">Помощь</span>
+            </Button>
+            
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
