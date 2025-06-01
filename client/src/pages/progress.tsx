@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { UserProgressCard } from '@/components/progress/user-progress-card';
 import { Leaderboard } from '@/components/progress/leaderboard';
-import { Trophy, Users, Target, TrendingUp, RefreshCw } from 'lucide-react';
+import { Trophy, Users, Target, TrendingUp, RefreshCw, Info, GitCommit, Calendar, Flame, Star, Zap } from 'lucide-react';
 
 interface LeaderboardEntry {
   user: {
@@ -94,10 +94,14 @@ export default function ProgressPage() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <Target className="w-4 h-4" />
               Обзор
+            </TabsTrigger>
+            <TabsTrigger value="rules" className="flex items-center gap-2">
+              <Info className="w-4 h-4" />
+              Правила
             </TabsTrigger>
             <TabsTrigger value="leaderboard-level" className="flex items-center gap-2">
               <Trophy className="w-4 h-4" />
@@ -151,6 +155,192 @@ export default function ProgressPage() {
                 )}
               </div>
             </div>
+          </TabsContent>
+
+          <TabsContent value="rules" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="p-2 bg-blue-100 rounded-lg">
+                      <Star className="w-6 h-6 text-blue-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">Уровни и опыт (XP)</h3>
+                      <p className="text-sm text-gray-600">Как повышается ваш уровень</p>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex items-start gap-2">
+                      <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2"></div>
+                      <p className="text-sm text-gray-700">Каждые 100 XP = новый уровень</p>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2"></div>
+                      <p className="text-sm text-gray-700">XP начисляется за коммиты в репозиториях</p>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2"></div>
+                      <p className="text-sm text-gray-700">Дополнительные XP за активность в сообществе</p>
+                    </div>
+                    <div className="bg-blue-50 p-3 rounded-lg mt-4">
+                      <p className="text-xs text-blue-800">
+                        <strong>Совет:</strong> Регулярная активность в репозиториях поможет быстрее набирать опыт
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="p-2 bg-green-100 rounded-lg">
+                      <GitCommit className="w-6 h-6 text-green-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">Коммиты</h3>
+                      <p className="text-sm text-gray-600">Отслеживание активности в репозиториях</p>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex items-start gap-2">
+                      <div className="w-1.5 h-1.5 bg-green-500 rounded-full mt-2"></div>
+                      <p className="text-sm text-gray-700">Считаются все коммиты в подключенных репозиториях</p>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <div className="w-1.5 h-1.5 bg-green-500 rounded-full mt-2"></div>
+                      <p className="text-sm text-gray-700">Обновляется автоматически каждый день</p>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <div className="w-1.5 h-1.5 bg-green-500 rounded-full mt-2"></div>
+                      <p className="text-sm text-gray-700">Влияет на общий рейтинг активности</p>
+                    </div>
+                    <div className="bg-green-50 p-3 rounded-lg mt-4">
+                      <p className="text-xs text-green-800">
+                        <strong>Совет:</strong> Подключите свои активные репозитории для полного учета
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="p-2 bg-orange-100 rounded-lg">
+                      <Calendar className="w-6 h-6 text-orange-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">Активные дни</h3>
+                      <p className="text-sm text-gray-600">Дни с активностью в репозиториях</p>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex items-start gap-2">
+                      <div className="w-1.5 h-1.5 bg-orange-500 rounded-full mt-2"></div>
+                      <p className="text-sm text-gray-700">День считается активным при наличии коммитов</p>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <div className="w-1.5 h-1.5 bg-orange-500 rounded-full mt-2"></div>
+                      <p className="text-sm text-gray-700">Показывает постоянство в разработке</p>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <div className="w-1.5 h-1.5 bg-orange-500 rounded-full mt-2"></div>
+                      <p className="text-sm text-gray-700">Учитывается общее количество уникальных дней</p>
+                    </div>
+                    <div className="bg-orange-50 p-3 rounded-lg mt-4">
+                      <p className="text-xs text-orange-800">
+                        <strong>Совет:</strong> Стремитесь к регулярной активности, а не к большому количеству коммитов за один день
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="p-2 bg-red-100 rounded-lg">
+                      <Flame className="w-6 h-6 text-red-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">Серии активности</h3>
+                      <p className="text-sm text-gray-600">Последовательные дни с коммитами</p>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex items-start gap-2">
+                      <div className="w-1.5 h-1.5 bg-red-500 rounded-full mt-2"></div>
+                      <p className="text-sm text-gray-700">Текущая серия - дни подряд с активностью</p>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <div className="w-1.5 h-1.5 bg-red-500 rounded-full mt-2"></div>
+                      <p className="text-sm text-gray-700">Лучшая серия - максимальная достигнутая серия</p>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <div className="w-1.5 h-1.5 bg-red-500 rounded-full mt-2"></div>
+                      <p className="text-sm text-gray-700">Серия обнуляется при пропуске дня</p>
+                    </div>
+                    <div className="bg-red-50 p-3 rounded-lg mt-4">
+                      <p className="text-xs text-red-800">
+                        <strong>Совет:</strong> Даже небольшой коммит в день поддержит вашу серию
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 bg-purple-100 rounded-lg">
+                    <Zap className="w-6 h-6 text-purple-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Система обновления</h3>
+                    <p className="text-sm text-gray-600">Как и когда обновляются данные</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-3">
+                    <h4 className="font-medium text-gray-900">Автоматические обновления:</h4>
+                    <div className="space-y-2">
+                      <div className="flex items-start gap-2">
+                        <div className="w-1.5 h-1.5 bg-purple-500 rounded-full mt-2"></div>
+                        <p className="text-sm text-gray-700">Ежедневная проверка репозиториев</p>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <div className="w-1.5 h-1.5 bg-purple-500 rounded-full mt-2"></div>
+                        <p className="text-sm text-gray-700">Анализ новых коммитов через GitHub API</p>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <div className="w-1.5 h-1.5 bg-purple-500 rounded-full mt-2"></div>
+                        <p className="text-sm text-gray-700">Пересчет статистики и рейтингов</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <h4 className="font-medium text-gray-900">Требования:</h4>
+                    <div className="space-y-2">
+                      <div className="flex items-start gap-2">
+                        <div className="w-1.5 h-1.5 bg-purple-500 rounded-full mt-2"></div>
+                        <p className="text-sm text-gray-700">Авторизация через GitHub</p>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <div className="w-1.5 h-1.5 bg-purple-500 rounded-full mt-2"></div>
+                        <p className="text-sm text-gray-700">Подключенные репозитории</p>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <div className="w-1.5 h-1.5 bg-purple-500 rounded-full mt-2"></div>
+                        <p className="text-sm text-gray-700">Публичные или доступные репозитории</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="leaderboard-level" className="space-y-6">
