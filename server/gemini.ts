@@ -46,9 +46,9 @@ ${JSON.stringify(commitData, null, 2)}
 
 Используй простые слова, избегай технических терминов. Например, вместо "рефакторинг" используй "улучшение кода", вместо "баг фикс" - "исправление ошибки".`;
 
-      // Инициализируем модель Gemini 2.5 PRO
+      // Инициализируем модель Gemini Pro
       const model = genAI.getGenerativeModel({ 
-        model: "gemini-2.5-pro",
+        model: "gemini-pro",
         generationConfig: {
           temperature: 0.7,
           topP: 0.8,
@@ -122,7 +122,7 @@ ${JSON.stringify(commitData, null, 2)}
 Используй простые слова, избегай технических терминов.`;
 
       const model = genAI.getGenerativeModel({ 
-        model: "gemini-2.5-pro",
+        model: "gemini-pro",
         generationConfig: {
           temperature: 0.7,
           topP: 0.8,
