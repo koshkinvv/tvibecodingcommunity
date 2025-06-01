@@ -18,67 +18,40 @@ import {
 
 interface ProjectAnalysis {
   codeQuality: {
-    score: number;
     suggestions: string[];
   };
   architecture: {
-    score: number;
     suggestions: string[];
   };
   userExperience: {
-    score: number;
     suggestions: string[];
   };
   performance: {
-    score: number;
     suggestions: string[];
   };
   security: {
-    score: number;
     suggestions: string[];
   };
   overallRecommendations: string[];
 }
 
-const ScoreCard = ({ 
+const RecommendationCard = ({ 
   title, 
-  score, 
   suggestions, 
   icon: Icon,
   color 
 }: { 
   title: string; 
-  score: number; 
   suggestions: string[]; 
   icon: any;
   color: string;
 }) => {
-  const getScoreColor = (score: number) => {
-    if (score >= 8) return "text-green-600";
-    if (score >= 6) return "text-yellow-600";
-    return "text-red-600";
-  };
-
-  const getProgressColor = (score: number) => {
-    if (score >= 8) return "bg-green-500";
-    if (score >= 6) return "bg-yellow-500";
-    return "bg-red-500";
-  };
-
   return (
     <Card>
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Icon className={`h-5 w-5 ${color}`} />
-            <CardTitle className="text-lg">{title}</CardTitle>
-          </div>
-          <Badge variant="outline" className={getScoreColor(score)}>
-            {score}/10
-          </Badge>
-        </div>
-        <div className="space-y-2">
-          <Progress value={score * 10} className="h-2" />
+        <div className="flex items-center space-x-2">
+          <Icon className={`h-5 w-5 ${color}`} />
+          <CardTitle className="text-lg">{title}</CardTitle>
         </div>
       </CardHeader>
       <CardContent>
@@ -173,14 +146,6 @@ export default function ProjectInsightsPage() {
     return null;
   }
 
-  const overallScore = Math.round(
-    (analysis.codeQuality.score + 
-     analysis.architecture.score + 
-     analysis.userExperience.score + 
-     analysis.performance.score + 
-     analysis.security.score) / 5
-  );
-
   return (
     <div className="max-w-6xl mx-auto p-4 sm:p-6">
       <div className="space-y-4 sm:space-y-6">
@@ -197,64 +162,38 @@ export default function ProjectInsightsPage() {
           </Button>
         </div>
 
-        {/* Общая оценка */}
-        <Card className="bg-gradient-to-r from-blue-50 to-indigo-50">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900 mb-1">Общая оценка проекта</h2>
-                <p className="text-sm text-gray-600">
-                  Средний балл по всем категориям
-                </p>
-              </div>
-              <div className="flex items-center space-x-3">
-                <TrendingUp className="h-8 w-8 text-blue-600" />
-                <div className="text-right">
-                  <div className="text-3xl font-bold text-blue-600">{overallScore}/10</div>
-                  <Progress value={overallScore * 10} className="w-24 h-2 mt-1" />
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Детальные оценки */}
+        {/* Рекомендации по категориям */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          <ScoreCard
+          <RecommendationCard
             title="Качество кода"
-            score={analysis.codeQuality.score}
             suggestions={analysis.codeQuality.suggestions}
             icon={Code}
             color="text-blue-600"
           />
           
-          <ScoreCard
+          <RecommendationCard
             title="Архитектура"
-            score={analysis.architecture.score}
             suggestions={analysis.architecture.suggestions}
             icon={Building2}
             color="text-purple-600"
           />
           
-          <ScoreCard
+          <RecommendationCard
             title="UX/UI"
-            score={analysis.userExperience.score}
             suggestions={analysis.userExperience.suggestions}
             icon={Users}
             color="text-green-600"
           />
           
-          <ScoreCard
+          <RecommendationCard
             title="Производительность"
-            score={analysis.performance.score}
             suggestions={analysis.performance.suggestions}
             icon={Zap}
             color="text-yellow-600"
           />
           
-          <ScoreCard
+          <RecommendationCard
             title="Безопасность"
-            score={analysis.security.score}
             suggestions={analysis.security.suggestions}
             icon={Shield}
             color="text-red-600"

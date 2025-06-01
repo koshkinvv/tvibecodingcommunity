@@ -9,23 +9,18 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 export interface ProjectAnalysis {
   codeQuality: {
-    score: number;
     suggestions: string[];
   };
   architecture: {
-    score: number;
     suggestions: string[];
   };
   userExperience: {
-    score: number;
     suggestions: string[];
   };
   performance: {
-    score: number;
     suggestions: string[];
   };
   security: {
-    score: number;
     suggestions: string[];
   };
   overallRecommendations: string[];
@@ -68,11 +63,11 @@ export class ProjectAnalyzer {
 `;
 
     const prompt = `
-Проанализируй проект разработчика и дай экспертные рекомендации по улучшению в следующих областях:
+Проанализируй проект разработчика и дай конкретные рекомендации по улучшению в следующих областях:
 
 ${projectContext}
 
-Дай оценку от 1 до 10 и конкретные предложения по улучшению в каждой категории:
+Дай практические предложения по улучшению в каждой категории:
 
 1. КАЧЕСТВО КОДА
 - Анализируй структуру проекта, использование TypeScript, организацию компонентов
@@ -97,23 +92,18 @@ ${projectContext}
 Ответь в формате JSON:
 {
   "codeQuality": {
-    "score": число_от_1_до_10,
     "suggestions": ["предложение1", "предложение2", ...]
   },
   "architecture": {
-    "score": число_от_1_до_10,
     "suggestions": ["предложение1", "предложение2", ...]
   },
   "userExperience": {
-    "score": число_от_1_до_10,
     "suggestions": ["предложение1", "предложение2", ...]
   },
   "performance": {
-    "score": число_от_1_до_10,
     "suggestions": ["предложение1", "предложение2", ...]
   },
   "security": {
-    "score": число_от_1_до_10,
     "suggestions": ["предложение1", "предложение2", ...]
   },
   "overallRecommendations": ["общая_рекомендация1", "общая_рекомендация2", ...]
@@ -148,23 +138,18 @@ ${projectContext}
       // Возвращаем базовый анализ в случае ошибки
       return {
         codeQuality: {
-          score: 7,
           suggestions: ["Улучшите типизацию TypeScript", "Добавьте больше unit тестов", "Рефакторите крупные компоненты"]
         },
         architecture: {
-          score: 7,
           suggestions: ["Добавьте слой сервисов", "Улучшите разделение логики", "Рассмотрите микросервисную архитектуру"]
         },
         userExperience: {
-          score: 6,
           suggestions: ["Улучшите мобильную версию", "Добавьте индикаторы загрузки", "Оптимизируйте навигацию"]
         },
         performance: {
-          score: 6,
           suggestions: ["Добавьте кеширование", "Оптимизируйте запросы к базе", "Внедрите lazy loading"]
         },
         security: {
-          score: 7,
           suggestions: ["Усильте валидацию данных", "Добавьте rate limiting", "Улучшите обработку ошибок"]
         },
         overallRecommendations: [
