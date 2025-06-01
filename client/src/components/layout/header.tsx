@@ -56,6 +56,7 @@ export function Header() {
               <NavLink href="/guidelines">Guidelines</NavLink>
               {user && <NavLink href="/activity">Activity</NavLink>}
               {user && <NavLink href="/insights">Insights</NavLink>}
+              {user && <NavLink href="/progress">Progress</NavLink>}
               {user && <NavLink href="/profile">Profile</NavLink>}
               {user && <NavLink href="/community">Community</NavLink>}
               {user && <NavLink href="/projects">Projects</NavLink>}

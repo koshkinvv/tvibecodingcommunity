@@ -634,6 +634,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to fetch community members" });
     }
   });
+
+  // Get user progress
+  app.get("/api/progress/:userId", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      if (isNaN(userId)) {
+        return res.status(400).json({ error: "Invalid user ID" });
+      }
+
+      const progress = await storage.getUserProgress(userId);
+      if (!progress) {
+        // Create initial progress for user
+        const newProgress = await storage.createUserProgress({
+          userId,
+          totalCommits: 0,
+          activeDays: 0,
+          currentStreak: 0,
+          longestStreak: 0,
+          level: 1,
+          experience: 0,
+          badges: []
+        });
+        return res.json(newProgress);
+      }
+
+      res.json(progress);
+    } catch (error) {
+      console.error("Error fetching user progress:", error);
+      res.status(500).json({ error: "Failed to fetch user progress" });
+    }
+  });
+
+  // Get leaderboard with user progress
+  app.get("/api/leaderboard", async (req, res) => {
+    try {
+      const users = await storage.getUsers();
+      const leaderboard = [];
+
+      for (const user of users) {
+        let progress = await storage.getUserProgress(user.id);
+        
+        if (!progress) {
+          // Create initial progress for users who don't have it
+          progress = await storage.createUserProgress({
+            userId: user.id,
+            totalCommits: 0,
+            activeDays: 0,
+            currentStreak: 0,
+            longestStreak: 0,
+            level: 1,
+            experience: 0,
+            badges: []
+          });
+        }
+
+        leaderboard.push({
+          user,
+          progress
+        });
+      }
+
+      res.json(leaderboard);
+    } catch (error) {
+      console.error("Error fetching leaderboard:", error);
+      res.status(500).json({ error: "Failed to fetch leaderboard" });
+    }
+  });
   
   // Admin endpoints
   app.get("/api/admin/users", auth.isAdmin, async (req, res) => {
