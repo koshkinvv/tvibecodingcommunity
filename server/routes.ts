@@ -138,17 +138,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "User not found" });
       }
 
-      let repositories = await storage.getRepositoriesByUser(userId);
-      
       // Если указан конкретный репозиторий, анализируем только его
       if (repositoryId) {
         const repository = await storage.getRepository(parseInt(repositoryId));
         if (!repository || repository.userId !== userId) {
           return res.status(404).json({ error: "Repository not found" });
         }
-        repositories = [repository];
+        
+        // Используем специализированный анализ для конкретного репозитория
+        const analysis = await projectAnalyzer.analyzeSpecificRepository(user, repository);
+        return res.json(analysis);
       }
 
+      // Общий анализ всех репозиториев пользователя
+      const repositories = await storage.getRepositoriesByUser(userId);
       const analysis = await projectAnalyzer.analyzeUserProject(user, repositories);
       
       res.json(analysis);

@@ -47,7 +47,7 @@ export class ProjectAnalyzer {
 - Статус: ${repository.status}
 - Дней с последнего коммита: ${daysSinceLastCommit}
 - Последние изменения: ${repository.changesSummary || "Нет данных об изменениях"}
-- Дата создания: ${new Date(repository.createdAt).toLocaleDateString('ru-RU')}
+- Дата создания: ${new Date(repository.createdAt || Date.now()).toLocaleDateString('ru-RU')}
 - Последний коммит: ${repository.lastCommitDate ? new Date(repository.lastCommitDate).toLocaleDateString('ru-RU') : 'Нет данных'}
 
 ТЕХНИЧЕСКИЙ КОНТЕКСТ:
