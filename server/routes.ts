@@ -741,18 +741,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Update each repository's status
         for (const repo of repositories) {
           try {
-            const lastCommitDate = await githubClient.getLastCommitDate(repo);
+            // Get latest commit information
+            const latestCommit = await githubClient.getLatestCommit(repo.fullName);
+            
+            if (!latestCommit) {
+              console.log(`No commits found for repository ${repo.fullName}`);
+              continue;
+            }
+
+            const lastCommitDate = new Date(latestCommit.commit.author.date);
+            const newCommitSha = latestCommit.sha;
             const newStatus = githubClient.calculateRepositoryStatus(lastCommitDate);
             
-            // Update repository if status changed
-            if (newStatus !== repo.status || 
-                (lastCommitDate && repo.lastCommitDate && lastCommitDate.getTime() !== new Date(repo.lastCommitDate).getTime()) ||
-                (!lastCommitDate && repo.lastCommitDate) ||
-                (lastCommitDate && !repo.lastCommitDate)) {
+            // Check if we need to update the repository
+            const needsUpdate = 
+              newStatus !== repo.status || 
+              newCommitSha !== repo.lastCommitSha ||
+              (lastCommitDate && repo.lastCommitDate && lastCommitDate.getTime() !== new Date(repo.lastCommitDate).getTime()) ||
+              (!lastCommitDate && repo.lastCommitDate) ||
+              (lastCommitDate && !repo.lastCommitDate);
+            
+            if (needsUpdate) {
+              // Check if there are new commits for summary generation
+              let changesSummary = repo.changesSummary;
+              let summaryGeneratedAt = repo.summaryGeneratedAt;
+              
+              if (repo.lastCommitSha !== newCommitSha && repo.lastCommitSha) {
+                try {
+                  const { openaiService } = await import('./openai');
+                  const newCommits = await githubClient.getCommitsSince(repo.fullName, repo.lastCommitSha || undefined);
+                  
+                  if (newCommits.length > 0) {
+                    changesSummary = await openaiService.generateChangesSummary(newCommits);
+                    summaryGeneratedAt = new Date();
+                  }
+                } catch (summaryError) {
+                  console.error(`Error generating summary for ${repo.fullName}:`, summaryError);
+                  changesSummary = "Не удалось проанализировать изменения";
+                  summaryGeneratedAt = new Date();
+                }
+              }
               
               await storage.updateRepository(repo.id, {
                 status: newStatus,
-                lastCommitDate: lastCommitDate as any
+                lastCommitDate: lastCommitDate,
+                lastCommitSha: newCommitSha,
+                changesSummary,
+                summaryGeneratedAt
               });
               
               results.repositoriesUpdated++;
@@ -761,7 +796,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 repository: repo.fullName,
                 oldStatus: repo.status,
                 newStatus: newStatus,
-                lastCommit: lastCommitDate?.toISOString()
+                lastCommit: lastCommitDate?.toISOString(),
+                hasSummary: !!changesSummary
               });
             }
           } catch (error) {
