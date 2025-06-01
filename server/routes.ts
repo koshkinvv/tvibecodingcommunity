@@ -107,10 +107,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get user repositories - requires authentication
+  app.get("/api/user/repositories", auth.isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req.user as any)?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "User not found" });
+      }
+
+      const repositories = await storage.getRepositoriesByUser(userId);
+      res.json(repositories);
+    } catch (error) {
+      console.error("Error fetching repositories:", error);
+      res.status(500).json({ error: "Failed to fetch repositories" });
+    }
+  });
+
   // Project analysis route - requires authentication
   app.get("/api/project/analysis", auth.isAuthenticated, async (req, res) => {
     try {
       const userId = (req.user as any)?.id;
+      const repositoryId = req.query.repositoryId as string;
+      
       if (!userId) {
         return res.status(401).json({ error: "User not found" });
       }
@@ -120,7 +138,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "User not found" });
       }
 
-      const repositories = await storage.getRepositoriesByUser(userId);
+      let repositories = await storage.getRepositoriesByUser(userId);
+      
+      // Если указан конкретный репозиторий, анализируем только его
+      if (repositoryId) {
+        const repository = await storage.getRepository(parseInt(repositoryId));
+        if (!repository || repository.userId !== userId) {
+          return res.status(404).json({ error: "Repository not found" });
+        }
+        repositories = [repository];
+      }
+
       const analysis = await projectAnalyzer.analyzeUserProject(user, repositories);
       
       res.json(analysis);
