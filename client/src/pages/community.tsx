@@ -80,7 +80,7 @@ export default function CommunityPage() {
             <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">Community Gallery</h2>
           </div>
           <div className="mt-4 flex gap-3 md:mt-0 md:ml-4">
-            <Link href="/community/guidelines">
+            <Link href="/guidelines">
               <Button variant="outline" size="sm" className="flex items-center gap-2">
                 <BookOpen className="h-4 w-4" />
                 Правила сообщества

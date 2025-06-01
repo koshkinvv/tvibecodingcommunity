@@ -12,7 +12,7 @@ export function Footer() {
             </a>
           </div>
           <div className="px-5 py-2">
-            <Link href="/community/guidelines">
+            <Link href="/guidelines">
               <a className="text-base text-gray-500 hover:text-gray-900">
                 Community Guidelines
               </a>

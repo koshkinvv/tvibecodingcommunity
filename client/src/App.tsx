@@ -41,7 +41,7 @@ function Router() {
         {user ? <ProjectInsightsPage /> : <LoginPage />}
       </Route>
       <Route path="/community" component={CommunityPage} />
-      <Route path="/community/guidelines" component={CommunityGuidelinesPage} />
+      <Route path="/guidelines" component={CommunityGuidelinesPage} />
       <Route path="/projects">
         {user ? <ProjectsPage /> : <LoginPage />}
       </Route>
