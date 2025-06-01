@@ -1,11 +1,19 @@
 import {
   users, repositories, weeklyStats, activityFeed, repositoryComments, userProgress,
+  achievements, userAchievements, mentorships, learningResources, challenges, challengeParticipants, codeReviews,
   type User, type InsertUser,
   type Repository, type InsertRepository,
   type WeeklyStat, type InsertWeeklyStat,
   type ActivityFeed, type InsertActivityFeed,
   type RepositoryComment, type InsertRepositoryComment,
-  type UserProgress, type InsertUserProgress
+  type UserProgress, type InsertUserProgress,
+  type Achievement, type InsertAchievement,
+  type UserAchievement, type InsertUserAchievement,
+  type Mentorship, type InsertMentorship,
+  type LearningResource, type InsertLearningResource,
+  type Challenge, type InsertChallenge,
+  type ChallengeParticipant, type InsertChallengeParticipant,
+  type CodeReview, type InsertCodeReview
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, gte, sql } from "drizzle-orm";
