@@ -32,23 +32,21 @@ export class GeminiService {
         })) || []
       }));
 
-      const prompt = `Проанализируй изменения в GitHub репозитории и создай краткое описание на русском языке. 
+      const prompt = `Ты эксперт по анализу изменений в коде. Ты создаешь понятные описания изменений в репозиториях простыми словами для разработчиков.
+
+Проанализируй изменения в GitHub репозитории и создай краткое описание на русском языке. 
 
 Данные о коммитах:
 ${JSON.stringify(commitData, null, 2)}
 
 Создай краткое и понятное описание изменений простыми словами. Ответ должен быть в формате JSON:
 {
-  "summary": "Краткое описание основных изменений простыми словами (максимум 2-3 предложения)",
-  "mainChanges": ["список ключевых изменений", "каждое изменение отдельной строкой"],
-  "filesModified": количество_измененных_файлов,
-  "linesAdded": количество_добавленных_строк,
-  "linesDeleted": количество_удаленных_строк
+  "summary": "Краткое описание основных изменений простыми словами (максимум 2-3 предложения)"
 }
 
 Используй простые слова, избегай технических терминов. Например, вместо "рефакторинг" используй "улучшение кода", вместо "баг фикс" - "исправление ошибки".`;
 
-      // Инициализируем модель Gemini 2.5 PRO
+      // Инициализируем модель Gemini 2.0 Flash Experimental
       const model = genAI.getGenerativeModel({ 
         model: "gemini-2.0-flash-exp",
         generationConfig: {
@@ -60,17 +58,7 @@ ${JSON.stringify(commitData, null, 2)}
         }
       });
 
-      const result = await model.generateContent([
-        {
-          role: "user",
-          parts: [{ text: "Ты эксперт по анализу изменений в коде. Ты создаешь понятные описания изменений в репозиториях простыми словами для разработчиков. Отвечай только в формате JSON." }]
-        },
-        {
-          role: "user", 
-          parts: [{ text: prompt }]
-        }
-      ]);
-
+      const result = await model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
       
@@ -115,7 +103,9 @@ ${JSON.stringify(commitData, null, 2)}
         })) || []
       }));
 
-      const prompt = `Проанализируй изменения в GitHub репозитории и создай детальное описание на русском языке.
+      const prompt = `Ты эксперт по анализу изменений в коде. Ты создаешь понятные описания изменений в репозиториях простыми словами для разработчиков.
+
+Проанализируй изменения в GitHub репозитории и создай детальное описание на русском языке.
 
 Данные о коммитах:
 ${JSON.stringify(commitData, null, 2)}
@@ -142,17 +132,7 @@ ${JSON.stringify(commitData, null, 2)}
         }
       });
 
-      const result = await model.generateContent([
-        {
-          role: "user",
-          parts: [{ text: "Ты эксперт по анализу изменений в коде. Ты создаешь понятные описания изменений в репозиториях простыми словами для разработчиков. Отвечай только в формате JSON." }]
-        },
-        {
-          role: "user", 
-          parts: [{ text: prompt }]
-        }
-      ]);
-
+      const result = await model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
       
