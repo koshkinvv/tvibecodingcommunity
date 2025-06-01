@@ -19,9 +19,11 @@ export function Footer() {
             </Link>
           </div>
           <div className="px-5 py-2">
-            <a href="#" className="text-base text-gray-500 hover:text-gray-900">
-              Privacy Policy
-            </a>
+            <Link href="/privacy">
+              <a className="text-base text-gray-500 hover:text-gray-900">
+                Privacy Policy
+              </a>
+            </Link>
           </div>
           <div className="px-5 py-2">
             <a href="https://github.com" className="text-base text-gray-500 hover:text-gray-900">
