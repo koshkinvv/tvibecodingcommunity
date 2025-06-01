@@ -79,7 +79,13 @@ export default function CommunityPage() {
           <div className="flex-1 min-w-0">
             <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">Community Gallery</h2>
           </div>
-          <div className="mt-4 flex md:mt-0 md:ml-4">
+          <div className="mt-4 flex gap-3 md:mt-0 md:ml-4">
+            <Link href="/community/guidelines">
+              <Button variant="outline" size="sm" className="flex items-center gap-2">
+                <BookOpen className="h-4 w-4" />
+                Правила сообщества
+              </Button>
+            </Link>
             <div className="relative">
               <Input
                 type="text"
