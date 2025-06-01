@@ -142,10 +142,9 @@ export default function CommunityGuidelines() {
               <div>
                 <h4 className="font-semibold mb-2">Минимальные требования:</h4>
                 <ul className="space-y-1 text-sm">
-                  <li>• Минимум 2 комментария в месяц</li>
                   <li>• Ответы на вопросы в своих проектах</li>
-                  <li>• Участие в еженедельных обсуждениях</li>
-                  <li>• Обратная связь на полученные комментарии</li>
+                  <li>• Участие в обсуждениях</li>
+                  <li>• Прокачивайтесь как можно сильнее</li>
                 </ul>
               </div>
             </div>
