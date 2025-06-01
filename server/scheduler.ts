@@ -109,7 +109,7 @@ export class Scheduler {
               
               try {
                 // Get commits since last check
-                const newCommits = await githubClient.getCommitsSince(repo.fullName, repo.lastCommitSha);
+                const newCommits = await githubClient.getCommitsSince(repo.fullName, repo.lastCommitSha || undefined);
                 
                 if (newCommits.length > 0) {
                   // Generate AI summary of changes

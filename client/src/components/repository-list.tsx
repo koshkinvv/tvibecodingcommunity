@@ -175,14 +175,14 @@ export function RepositoryList({ userId, readOnly = false }: RepositoryListProps
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {repositories && repositories.length > 0 ? (
         repositories.map(repo => (
-          <div key={repo.id} className="space-y-4">
+          <div key={repo.id} className="space-y-2">
             <RepositorySummary repository={repo} />
             
             {!readOnly && (
-              <div className="flex justify-end mt-2">
+              <div className="flex justify-end">
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button 
@@ -220,7 +220,7 @@ export function RepositoryList({ userId, readOnly = false }: RepositoryListProps
         <Card className="bg-white shadow">
           <CardContent className="px-4 py-5 sm:p-6 text-center">
             <p className="text-gray-500">
-              {readOnly ? 'No repositories found' : 'You have no repositories yet'}
+              {readOnly ? 'Репозитории не найдены' : 'У вас пока нет репозиториев'}
             </p>
           </CardContent>
         </Card>
