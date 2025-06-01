@@ -990,6 +990,97 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Public projects page - requires authentication to view
+  app.get("/api/projects", auth.isAuthenticated, async (req, res) => {
+    try {
+      const projects = await storage.getPublicRepositories();
+      res.json(projects);
+    } catch (error) {
+      console.error("Error fetching public projects:", error);
+      res.status(500).json({ error: "Failed to fetch projects" });
+    }
+  });
+
+  // Add comment to repository - requires authentication
+  app.post("/api/repositories/:id/comments", auth.isAuthenticated, async (req, res) => {
+    try {
+      const repositoryId = parseInt(req.params.id);
+      const userId = (req.user as any)?.id;
+      const { content } = req.body;
+
+      if (!content || content.trim().length === 0) {
+        return res.status(400).json({ error: "Comment content is required" });
+      }
+
+      if (content.length > 1000) {
+        return res.status(400).json({ error: "Comment is too long (max 1000 characters)" });
+      }
+
+      // Verify repository exists and is public
+      const repository = await storage.getRepository(repositoryId);
+      if (!repository) {
+        return res.status(404).json({ error: "Repository not found" });
+      }
+
+      if (!repository.isPublic) {
+        return res.status(403).json({ error: "Cannot comment on private repository" });
+      }
+
+      const comment = await storage.createRepositoryComment({
+        repositoryId,
+        userId,
+        content: content.trim()
+      });
+
+      res.status(201).json(comment);
+    } catch (error) {
+      console.error("Error creating comment:", error);
+      res.status(500).json({ error: "Failed to create comment" });
+    }
+  });
+
+  // Get comments for repository
+  app.get("/api/repositories/:id/comments", auth.isAuthenticated, async (req, res) => {
+    try {
+      const repositoryId = parseInt(req.params.id);
+      
+      // Verify repository exists and is public
+      const repository = await storage.getRepository(repositoryId);
+      if (!repository) {
+        return res.status(404).json({ error: "Repository not found" });
+      }
+
+      if (!repository.isPublic) {
+        return res.status(403).json({ error: "Cannot view comments on private repository" });
+      }
+
+      const comments = await storage.getRepositoryComments(repositoryId);
+      res.json(comments);
+    } catch (error) {
+      console.error("Error fetching comments:", error);
+      res.status(500).json({ error: "Failed to fetch comments" });
+    }
+  });
+
+  // Delete comment - requires authentication and ownership
+  app.delete("/api/comments/:id", auth.isAuthenticated, async (req, res) => {
+    try {
+      const commentId = parseInt(req.params.id);
+      const userId = (req.user as any)?.id;
+
+      const success = await storage.deleteRepositoryComment(commentId, userId);
+      
+      if (!success) {
+        return res.status(404).json({ error: "Comment not found or unauthorized" });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting comment:", error);
+      res.status(500).json({ error: "Failed to delete comment" });
+    }
+  });
+
   // Health check endpoint
   app.get("/api/health", (req, res) => {
     res.json({ status: "healthy" });
@@ -1004,97 +1095,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (error) {
         console.error("Error triggering repo check:", error);
         res.status(500).json({ error: "Failed to trigger repository check" });
-      }
-    });
-
-    // Public projects page - requires authentication to view
-    app.get("/api/projects", auth.isAuthenticated, async (req, res) => {
-      try {
-        const projects = await storage.getPublicRepositories();
-        res.json(projects);
-      } catch (error) {
-        console.error("Error fetching public projects:", error);
-        res.status(500).json({ error: "Failed to fetch projects" });
-      }
-    });
-
-    // Add comment to repository - requires authentication
-    app.post("/api/repositories/:id/comments", auth.isAuthenticated, async (req, res) => {
-      try {
-        const repositoryId = parseInt(req.params.id);
-        const userId = (req.user as any)?.id;
-        const { content } = req.body;
-
-        if (!content || content.trim().length === 0) {
-          return res.status(400).json({ error: "Comment content is required" });
-        }
-
-        if (content.length > 1000) {
-          return res.status(400).json({ error: "Comment is too long (max 1000 characters)" });
-        }
-
-        // Verify repository exists and is public
-        const repository = await storage.getRepository(repositoryId);
-        if (!repository) {
-          return res.status(404).json({ error: "Repository not found" });
-        }
-
-        if (!repository.isPublic) {
-          return res.status(403).json({ error: "Cannot comment on private repository" });
-        }
-
-        const comment = await storage.createRepositoryComment({
-          repositoryId,
-          userId,
-          content: content.trim()
-        });
-
-        res.status(201).json(comment);
-      } catch (error) {
-        console.error("Error creating comment:", error);
-        res.status(500).json({ error: "Failed to create comment" });
-      }
-    });
-
-    // Get comments for repository
-    app.get("/api/repositories/:id/comments", auth.isAuthenticated, async (req, res) => {
-      try {
-        const repositoryId = parseInt(req.params.id);
-        
-        // Verify repository exists and is public
-        const repository = await storage.getRepository(repositoryId);
-        if (!repository) {
-          return res.status(404).json({ error: "Repository not found" });
-        }
-
-        if (!repository.isPublic) {
-          return res.status(403).json({ error: "Cannot view comments on private repository" });
-        }
-
-        const comments = await storage.getRepositoryComments(repositoryId);
-        res.json(comments);
-      } catch (error) {
-        console.error("Error fetching comments:", error);
-        res.status(500).json({ error: "Failed to fetch comments" });
-      }
-    });
-
-    // Delete comment - requires authentication and ownership
-    app.delete("/api/comments/:id", auth.isAuthenticated, async (req, res) => {
-      try {
-        const commentId = parseInt(req.params.id);
-        const userId = (req.user as any)?.id;
-
-        const success = await storage.deleteRepositoryComment(commentId, userId);
-        
-        if (!success) {
-          return res.status(404).json({ error: "Comment not found or unauthorized" });
-        }
-
-        res.json({ success: true });
-      } catch (error) {
-        console.error("Error deleting comment:", error);
-        res.status(500).json({ error: "Failed to delete comment" });
       }
     });
   }
