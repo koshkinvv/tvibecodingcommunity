@@ -40,6 +40,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.redirect('/');
     }
   });
+
+  // Add mock login endpoint for user 2 (nskob)
+  app.get('/api/mock-login-user2', async (req, res) => {
+    try {
+      const user = await storage.getUser(2);
+      if (user) {
+        // @ts-ignore - Set the user in session for testing
+        req.login(user, () => {
+          res.redirect('/');
+        });
+      } else {
+        res.status(404).json({ error: 'User not found' });
+      }
+    } catch (error) {
+      res.status(500).json({ error: 'Error logging in as user 2' });
+    }
+  });
   
   // Initialize the scheduler for daily checks
   scheduler.startDailyCheck();
