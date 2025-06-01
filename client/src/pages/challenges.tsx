@@ -166,12 +166,12 @@ export default function ChallengesPage() {
     }
   };
 
-  const isUpcoming = (startDate: string) => new Date(startDate) > new Date();
-  const isActive = (startDate: string, endDate: string) => {
+  const isUpcoming = (startDate: string | Date) => new Date(startDate) > new Date();
+  const isActive = (startDate: string | Date, endDate: string | Date) => {
     const now = new Date();
     return new Date(startDate) <= now && new Date(endDate) >= now;
   };
-  const isEnded = (endDate: string) => new Date(endDate) < new Date();
+  const isEnded = (endDate: string | Date) => new Date(endDate) < new Date();
 
   if (isLoading) {
     return (

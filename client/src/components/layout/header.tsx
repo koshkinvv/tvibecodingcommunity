@@ -57,6 +57,9 @@ export function Header() {
               {user && <NavLink href="/activity">Activity</NavLink>}
               {user && <NavLink href="/insights">Insights</NavLink>}
               {user && <NavLink href="/progress">Progress</NavLink>}
+              {user && <NavLink href="/achievements">Achievements</NavLink>}
+              {user && <NavLink href="/challenges">Challenges</NavLink>}
+              {user && <NavLink href="/mentorship">Mentorship</NavLink>}
               {user && <NavLink href="/profile">Profile</NavLink>}
               {user && <NavLink href="/community">Community</NavLink>}
               {user && <NavLink href="/projects">Projects</NavLink>}
@@ -135,6 +138,10 @@ export function Header() {
           <MobileNavLink href="/guidelines">Guidelines</MobileNavLink>
           {user && <MobileNavLink href="/activity">Activity</MobileNavLink>}
           {user && <MobileNavLink href="/insights">Insights</MobileNavLink>}
+          {user && <MobileNavLink href="/progress">Progress</MobileNavLink>}
+          {user && <MobileNavLink href="/achievements">Achievements</MobileNavLink>}
+          {user && <MobileNavLink href="/challenges">Challenges</MobileNavLink>}
+          {user && <MobileNavLink href="/mentorship">Mentorship</MobileNavLink>}
           {user && <MobileNavLink href="/profile">Profile</MobileNavLink>}
           {user && <MobileNavLink href="/community">Community</MobileNavLink>}
           {user && <MobileNavLink href="/projects">Projects</MobileNavLink>}
