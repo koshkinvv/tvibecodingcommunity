@@ -94,10 +94,14 @@ export const useOnboarding = () => {
   useEffect(() => {
     // Auto-start onboarding for new users
     if (user && !hasCompletedOnboarding && !isActive) {
-      const autoStart = localStorage.getItem("onboarding-auto-start");
-      if (!autoStart) {
-        localStorage.setItem("onboarding-auto-start", "true");
-        startOnboarding();
+      const userOnboardingKey = `onboarding-completed-${user.id}`;
+      const userCompleted = localStorage.getItem(userOnboardingKey);
+      
+      if (!userCompleted) {
+        // Start onboarding for users who haven't completed it
+        setTimeout(() => {
+          startOnboarding();
+        }, 1000); // Small delay for page to load
       }
     }
   }, [user, hasCompletedOnboarding, isActive]);
@@ -150,16 +154,28 @@ export const useOnboarding = () => {
   const skipOnboarding = () => {
     setIsActive(false);
     setHasCompletedOnboarding(true);
+    if (user) {
+      const userOnboardingKey = `onboarding-completed-${user.id}`;
+      localStorage.setItem(userOnboardingKey, "true");
+    }
     localStorage.setItem("onboarding-completed", "true");
   };
 
   const completeOnboarding = () => {
     setIsActive(false);
     setHasCompletedOnboarding(true);
+    if (user) {
+      const userOnboardingKey = `onboarding-completed-${user.id}`;
+      localStorage.setItem(userOnboardingKey, "true");
+    }
     localStorage.setItem("onboarding-completed", "true");
   };
 
   const resetOnboarding = () => {
+    if (user) {
+      const userOnboardingKey = `onboarding-completed-${user.id}`;
+      localStorage.removeItem(userOnboardingKey);
+    }
     localStorage.removeItem("onboarding-completed");
     localStorage.removeItem("onboarding-auto-start");
     setHasCompletedOnboarding(false);
