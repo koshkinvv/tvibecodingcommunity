@@ -670,6 +670,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Trigger the repository check manually
       const checkResults = await triggerManualRepositoryCheck();
       
+      // Ensure checkResults is properly defined
+      if (!checkResults) {
+        throw new Error('Repository check returned undefined results');
+      }
+      
       res.json({
         success: true,
         message: 'Repository check completed successfully',
@@ -774,9 +779,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error during repository check:", error);
       results.errors++;
-      throw error;
+      results.details.push({
+        status: 'error',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
 
+    console.log('Repository check completed:', results);
     return results;
   }
 
