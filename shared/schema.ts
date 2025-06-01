@@ -46,6 +46,21 @@ export const weeklyStats = pgTable("weekly_stats", {
   stats: json("stats").default({}),
 });
 
+// Activity feed for public community activity
+export const activityFeed = pgTable("activity_feed", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  repositoryId: integer("repository_id").notNull().references(() => repositories.id, { onDelete: "cascade" }),
+  commitSha: text("commit_sha").notNull(),
+  commitMessage: text("commit_message").notNull(),
+  filesChanged: integer("files_changed").default(0),
+  linesAdded: integer("lines_added").default(0),
+  linesDeleted: integer("lines_deleted").default(0),
+  aiSummary: text("ai_summary"),
+  commitDate: timestamp("commit_date", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 // User insert schema without auto-generated fields
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -65,6 +80,12 @@ export const insertWeeklyStatsSchema = createInsertSchema(weeklyStats).omit({
   id: true,
 });
 
+// Activity feed insert schema without auto-generated fields
+export const insertActivityFeedSchema = createInsertSchema(activityFeed).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const githubUserSchema = z.object({
   login: z.string(),
   id: z.number(),
@@ -78,19 +99,32 @@ export const githubUserSchema = z.object({
 export const usersRelations = relations(users, ({ many }) => ({
   repositories: many(repositories),
   weeklyStats: many(weeklyStats),
+  activityFeed: many(activityFeed),
 }));
 
-export const repositoriesRelations = relations(repositories, ({ one }) => ({
+export const repositoriesRelations = relations(repositories, ({ one, many }) => ({
   user: one(users, {
     fields: [repositories.userId],
     references: [users.id],
   }),
+  activityFeed: many(activityFeed),
 }));
 
 export const weeklyStatsRelations = relations(weeklyStats, ({ one }) => ({
   user: one(users, {
     fields: [weeklyStats.userId],
     references: [users.id],
+  }),
+}));
+
+export const activityFeedRelations = relations(activityFeed, ({ one }) => ({
+  user: one(users, {
+    fields: [activityFeed.userId],
+    references: [users.id],
+  }),
+  repository: one(repositories, {
+    fields: [activityFeed.repositoryId],
+    references: [repositories.id],
   }),
 }));
 
@@ -101,4 +135,6 @@ export type Repository = typeof repositories.$inferSelect;
 export type InsertRepository = z.infer<typeof insertRepositorySchema>;
 export type WeeklyStat = typeof weeklyStats.$inferSelect;
 export type InsertWeeklyStat = z.infer<typeof insertWeeklyStatsSchema>;
+export type ActivityFeed = typeof activityFeed.$inferSelect;
+export type InsertActivityFeed = z.infer<typeof insertActivityFeedSchema>;
 export type GithubUser = z.infer<typeof githubUserSchema>;
