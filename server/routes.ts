@@ -6,6 +6,7 @@ import { githubClient } from "./github";
 import { scheduler } from "./scheduler";
 import { projectAnalyzer } from "./project-analyzer";
 import { geminiService } from "./gemini";
+import { performanceOptimizer } from "./performance-optimizer";
 import { z } from "zod";
 import { insertRepositorySchema } from "@shared/schema";
 
@@ -1099,6 +1100,99 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error during manual repository check:", error);
       res.status(500).json({ 
         error: "Failed to complete repository check",
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Performance Optimization endpoints
+  app.get("/api/repositories/:id/performance-analysis", auth.isAuthenticated, async (req, res) => {
+    try {
+      const repositoryId = parseInt(req.params.id);
+      const user = req.user as any;
+
+      if (isNaN(repositoryId)) {
+        return res.status(400).json({ error: "Invalid repository ID" });
+      }
+
+      const repository = await storage.getRepository(repositoryId);
+      if (!repository) {
+        return res.status(404).json({ error: "Repository not found" });
+      }
+
+      // Check if user owns this repository or is admin
+      if (repository.userId !== user.id && !user.isAdmin) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      const analysis = await performanceOptimizer.analyzeRepository(user, repository);
+      res.json(analysis);
+    } catch (error) {
+      console.error("Error analyzing repository performance:", error);
+      res.status(500).json({ 
+        error: "Failed to analyze repository performance",
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Get performance analysis for user's repositories
+  app.get("/api/user/performance-overview", auth.isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const repositories = await storage.getRepositoriesByUser(user.id);
+
+      const analyses = await Promise.allSettled(
+        repositories.map(async (repo) => {
+          try {
+            return await performanceOptimizer.analyzeRepository(user, repo);
+          } catch (error) {
+            console.error(`Error analyzing ${repo.fullName}:`, error);
+            return null;
+          }
+        })
+      );
+
+      const validAnalyses = analyses
+        .filter((result): result is PromiseFulfilledResult<any> => 
+          result.status === 'fulfilled' && result.value !== null
+        )
+        .map(result => result.value);
+
+      // Calculate aggregate metrics
+      const totalOptimizations = validAnalyses.reduce((sum, analysis) => 
+        sum + analysis.optimizations.length, 0
+      );
+
+      const averageScore = validAnalyses.length > 0 
+        ? Math.round(validAnalyses.reduce((sum, analysis) => 
+            sum + analysis.overallScore, 0
+          ) / validAnalyses.length)
+        : 0;
+
+      const criticalIssues = validAnalyses.reduce((sum, analysis) => 
+        sum + analysis.summary.criticalIssues, 0
+      );
+
+      const quickWins = validAnalyses.reduce((sum, analysis) => 
+        sum + analysis.summary.quickWins, 0
+      );
+
+      res.json({
+        repositories: validAnalyses,
+        summary: {
+          totalRepositories: repositories.length,
+          analyzedRepositories: validAnalyses.length,
+          averageScore,
+          totalOptimizations,
+          criticalIssues,
+          quickWins
+        }
+      });
+    } catch (error) {
+      console.error("Error getting performance overview:", error);
+      res.status(500).json({ 
+        error: "Failed to get performance overview",
         details: error instanceof Error ? error.message : 'Unknown error'
       });
     }
