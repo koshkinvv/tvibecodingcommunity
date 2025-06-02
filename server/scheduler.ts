@@ -265,7 +265,8 @@ export class Scheduler {
           if (currentWeekStat && currentWeekStat.isViber) {
             await storage.updateWeeklyStats({
               ...currentWeekStat,
-              isViber: false
+              isViber: false,
+              stats: currentWeekStat.stats as any
             });
           }
         }
@@ -277,7 +278,8 @@ export class Scheduler {
         if (currentStats) {
           await storage.updateWeeklyStats({
             ...currentStats,
-            isViber: true
+            isViber: true,
+            stats: currentStats.stats as any
           });
         } else {
           await storage.updateWeeklyStats({
