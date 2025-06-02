@@ -200,6 +200,9 @@ export class Scheduler {
           // If user has any active repositories, consider them active
           await storage.updateUser(user.id, { lastActive: new Date() });
         }
+
+        // Update user progress based on all their repositories
+        await this.updateUserProgress(user.id);
       }
       
       // Calculate and set "Viber of the Week"
@@ -305,6 +308,92 @@ export class Scheduler {
     const weekNumber = Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
     
     return `${year}-${weekNumber.toString().padStart(2, '0')}`;
+  }
+
+  // Update user progress based on their repositories
+  private async updateUserProgress(userId: number) {
+    try {
+      const repositories = await storage.getRepositoriesByUser(userId);
+      
+      if (repositories.length === 0) {
+        return;
+      }
+
+      let totalCommits = 0;
+      const activeDaysSet = new Set<string>();
+      let lastActivityDate: Date | null = null;
+
+      // Calculate stats from all repositories
+      for (const repo of repositories) {
+        try {
+          // Get all commits from this repository
+          const commits = await githubClient.getCommitsSince(repo.fullName);
+          
+          if (commits && commits.length > 0) {
+            totalCommits += commits.length;
+
+            // Track unique active days
+            commits.forEach(commit => {
+              if (commit.commit?.author?.date) {
+                const commitDate = new Date(commit.commit.author.date);
+                const dayKey = commitDate.toISOString().split('T')[0]; // YYYY-MM-DD
+                activeDaysSet.add(dayKey);
+
+                // Track most recent activity
+                if (!lastActivityDate || commitDate > lastActivityDate) {
+                  lastActivityDate = commitDate;
+                }
+              }
+            });
+          }
+        } catch (error) {
+          console.error(`Error fetching commits for ${repo.fullName}:`, error);
+        }
+      }
+
+      const activeDays = activeDaysSet.size;
+
+      // Calculate current streak
+      let currentStreak = 0;
+      if (activeDaysSet.size > 0) {
+        const sortedDays = Array.from(activeDaysSet).sort().reverse();
+        const today = new Date().toISOString().split('T')[0];
+        const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        
+        // Check if user was active today or yesterday to continue streak
+        if (sortedDays.includes(today) || sortedDays.includes(yesterday)) {
+          currentStreak = 1;
+          
+          // Count consecutive days backwards
+          for (let i = 1; i < sortedDays.length; i++) {
+            const currentDay = new Date(sortedDays[i]);
+            const previousDay = new Date(sortedDays[i - 1]);
+            const dayDiff = Math.abs((previousDay.getTime() - currentDay.getTime()) / (24 * 60 * 60 * 1000));
+            
+            if (dayDiff === 1) {
+              currentStreak++;
+            } else {
+              break;
+            }
+          }
+        }
+      }
+
+      // Calculate experience (simple formula: commits * 10)
+      const experience = totalCommits * 10;
+
+      // Update user progress with absolute values
+      await storage.updateUserProgressStats(userId, {
+        commits: totalCommits,
+        activeDays: activeDays,
+        currentStreak: currentStreak,
+        experience: experience
+      });
+
+      console.log(`Updated progress for user ${userId}: ${totalCommits} commits, ${activeDays} active days, ${currentStreak} streak`);
+    } catch (error) {
+      console.error(`Error updating progress for user ${userId}:`, error);
+    }
   }
 }
 

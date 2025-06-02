@@ -422,12 +422,12 @@ export class DatabaseStorage implements IStorage {
       });
     }
 
-    // Calculate new stats
-    const newTotalCommits = currentProgress.totalCommits + (stats.commits || 0);
-    const newActiveDays = Math.max(currentProgress.activeDays, stats.activeDays || 0);
+    // Set absolute values (not additive)
+    const newTotalCommits = stats.commits !== undefined ? stats.commits : currentProgress.totalCommits;
+    const newActiveDays = stats.activeDays !== undefined ? stats.activeDays : currentProgress.activeDays;
     const newCurrentStreak = stats.currentStreak !== undefined ? stats.currentStreak : currentProgress.currentStreak;
     const newLongestStreak = Math.max(currentProgress.longestStreak, newCurrentStreak);
-    const newExperience = currentProgress.experience + (stats.experience || 0);
+    const newExperience = stats.experience !== undefined ? stats.experience : currentProgress.experience;
     
     // Calculate level based on experience (level up every 100 XP)
     const newLevel = Math.floor(newExperience / 100) + 1;
