@@ -874,6 +874,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+
   // Helper function for manual repository check
   async function triggerManualRepositoryCheck() {
     const results = {
@@ -995,6 +996,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
               error: error instanceof Error ? error.message : 'Unknown error'
             });
           }
+        }
+
+        // Update user progress after checking all repositories
+        try {
+          let totalCommits = 0;
+          const activeDaysSet = new Set<string>();
+
+          // Calculate stats from all repositories
+          for (const repo of repositories) {
+            try {
+              const commits = await githubClient.getCommitsSince(repo.fullName);
+              if (commits && commits.length > 0) {
+                totalCommits += commits.length;
+                commits.forEach(commit => {
+                  if (commit.commit?.author?.date) {
+                    const commitDate = new Date(commit.commit.author.date);
+                    const dayKey = commitDate.toISOString().split('T')[0];
+                    activeDaysSet.add(dayKey);
+                  }
+                });
+              }
+            } catch (error) {
+              console.error(`Error fetching commits for ${repo.fullName}:`, error);
+            }
+          }
+
+          const activeDays = activeDaysSet.size;
+          const experience = totalCommits * 10;
+
+          // Simple streak calculation
+          let currentStreak = 0;
+          if (activeDaysSet.size > 0) {
+            const sortedDays = Array.from(activeDaysSet).sort().reverse();
+            const today = new Date().toISOString().split('T')[0];
+            const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+            
+            if (sortedDays.includes(today) || sortedDays.includes(yesterday)) {
+              currentStreak = 1;
+              for (let i = 1; i < sortedDays.length; i++) {
+                const currentDay = new Date(sortedDays[i]);
+                const previousDay = new Date(sortedDays[i - 1]);
+                const dayDiff = Math.abs((previousDay.getTime() - currentDay.getTime()) / (24 * 60 * 60 * 1000));
+                
+                if (dayDiff === 1) {
+                  currentStreak++;
+                } else {
+                  break;
+                }
+              }
+            }
+          }
+
+          await storage.updateUserProgressStats(user.id, {
+            commits: totalCommits,
+            activeDays: activeDays,
+            currentStreak: currentStreak,
+            experience: experience
+          });
+
+          console.log(`Updated progress for user ${user.username}: ${totalCommits} commits, ${activeDays} active days, ${currentStreak} streak`);
+        } catch (progressError) {
+          console.error(`Error updating progress for user ${user.username}:`, progressError);
         }
       }
     } catch (error) {
