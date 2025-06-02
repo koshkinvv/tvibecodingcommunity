@@ -56,7 +56,6 @@ export function Header() {
               <NavLink href="/guidelines">Guidelines</NavLink>
               {user && <NavLink href="/activity">Activity</NavLink>}
               {user && <NavLink href="/insights">Insights</NavLink>}
-              {user && <NavLink href="/performance">Performance</NavLink>}
               {user && <NavLink href="/progress">Progress</NavLink>}
               {user && <NavLink href="/profile">Profile</NavLink>}
               {user && <NavLink href="/community">Community</NavLink>}
@@ -136,8 +135,6 @@ export function Header() {
           <MobileNavLink href="/guidelines">Guidelines</MobileNavLink>
           {user && <MobileNavLink href="/activity">Activity</MobileNavLink>}
           {user && <MobileNavLink href="/insights">Insights</MobileNavLink>}
-          {user && <MobileNavLink href="/performance">Performance</MobileNavLink>}
-          {user && <MobileNavLink href="/progress">Progress</MobileNavLink>}
           {user && <MobileNavLink href="/profile">Profile</MobileNavLink>}
           {user && <MobileNavLink href="/community">Community</MobileNavLink>}
           {user && <MobileNavLink href="/projects">Projects</MobileNavLink>}

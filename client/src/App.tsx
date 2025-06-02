@@ -16,7 +16,6 @@ import AdminPage from "@/pages/admin";
 import ProjectInsightsPage from "@/pages/project-insights";
 import ProjectsPage from "@/pages/projects";
 import ProgressPage from "@/pages/progress";
-import PerformancePage from "@/pages/performance";
 import CommunityGuidelinesPage from "@/pages/community-guidelines";
 import PrivacyPolicyPage from "@/pages/privacy-policy";
 import { useAuth } from "@/hooks/use-auth";
@@ -51,9 +50,6 @@ function Router() {
       </Route>
       <Route path="/activity" component={ActivityPage} />
       <Route path="/progress" component={ProgressPage} />
-      <Route path="/performance">
-        {user ? <PerformancePage /> : <LoginPage />}
-      </Route>
       <Route path="/admin">
         {user?.isAdmin ? <AdminPage /> : <NotFound />}
       </Route>
