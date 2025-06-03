@@ -420,6 +420,7 @@ export class DatabaseStorage implements IStorage {
         lastActivityDate: new Date(),
         badges: []
       });
+      return currentProgress;
     }
 
     // Set absolute values (not additive)
@@ -431,6 +432,8 @@ export class DatabaseStorage implements IStorage {
     
     // Calculate level based on experience (level up every 100 XP)
     const newLevel = Math.floor(newExperience / 100) + 1;
+
+    console.log(`[STORAGE] Updating user ${userId} progress: ${newTotalCommits} commits, ${newActiveDays} active days, ${newCurrentStreak} streak, ${newExperience} XP, level ${newLevel}`);
 
     return await this.updateUserProgress(userId, {
       totalCommits: newTotalCommits,
