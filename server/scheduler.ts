@@ -337,20 +337,29 @@ export class Scheduler {
       const activeDaysSet = new Set<string>();
       let lastActivityDate: Date | null = null;
 
+      console.log(`Analyzing repositories for user ${user.username} (${user.githubId}): ${repositories.length} repos`);
+
       // Calculate stats from all repositories
       for (const repo of repositories) {
         try {
+          console.log(`Fetching commits for ${repo.fullName}...`);
           // Get all commits from this repository using user's token
           const commits = await githubClient.getCommitsSince(repo.fullName);
+          
+          console.log(`Found ${commits?.length || 0} commits in ${repo.fullName}`);
           
           if (commits && commits.length > 0) {
             // Only count commits by the repository owner
             let userCommitCount = 0;
-            commits.forEach(commit => {
+            commits.forEach((commit, index) => {
               if (commit.commit?.author?.date) {
                 // Check if this commit is by the user who owns the repository
                 const commitAuthor = commit.author?.login || commit.commit?.author?.name;
                 const commitAuthorGithubId = commit.author?.id?.toString();
+                
+                if (index < 3) { // Log first 3 commits for debugging
+                  console.log(`Commit ${index}: author=${commitAuthor}, authorId=${commitAuthorGithubId}, looking for user=${user.username}/${user.githubId}`);
+                }
                 
                 // Match by GitHub username or GitHub ID
                 const isUserCommit = (commitAuthor && commitAuthor.toLowerCase() === user.username.toLowerCase()) ||
@@ -370,6 +379,7 @@ export class Scheduler {
               }
             });
             
+            console.log(`User commits found in ${repo.fullName}: ${userCommitCount}`);
             totalCommits += userCommitCount;
           }
         } catch (error) {

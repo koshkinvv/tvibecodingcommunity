@@ -1011,19 +1011,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
           let totalCommits = 0;
           const activeDaysSet = new Set<string>();
 
-          // Calculate stats from all repositories
+          // Calculate stats from all repositories - only count user's own commits
           for (const repo of repositories) {
             try {
               const commits = await githubClient.getCommitsSince(repo.fullName);
               if (commits && commits.length > 0) {
-                totalCommits += commits.length;
+                let userCommitCount = 0;
                 commits.forEach(commit => {
                   if (commit.commit?.author?.date) {
-                    const commitDate = new Date(commit.commit.author.date);
-                    const dayKey = commitDate.toISOString().split('T')[0];
-                    activeDaysSet.add(dayKey);
+                    // Check if this commit is by the user who owns the repository
+                    const commitAuthor = commit.author?.login || commit.commit?.author?.name;
+                    const commitAuthorGithubId = commit.author?.id?.toString();
+                    
+                    // Match by GitHub username or GitHub ID
+                    const isUserCommit = (commitAuthor && commitAuthor.toLowerCase() === user.username.toLowerCase()) ||
+                                       (commitAuthorGithubId && commitAuthorGithubId === user.githubId);
+                    
+                    if (isUserCommit) {
+                      userCommitCount++;
+                      const commitDate = new Date(commit.commit.author.date);
+                      const dayKey = commitDate.toISOString().split('T')[0];
+                      activeDaysSet.add(dayKey);
+                    }
                   }
                 });
+                totalCommits += userCommitCount;
               }
             } catch (error) {
               console.error(`Error fetching commits for ${repo.fullName}:`, error);
