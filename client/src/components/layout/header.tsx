@@ -107,6 +107,7 @@ export function Header() {
                   <div className="h-6 w-px bg-gray-300 mx-2" role="separator" />
                   <NavLink href="/progress" icon={BarChart3}>Прогресс</NavLink>
                   <NavLink href="/activity" icon={Activity}>Активность</NavLink>
+                  <NavLink href="/insights" icon={Target}>Аналитика</NavLink>
                   <NavLink href="/projects" icon={GitBranch}>Проекты</NavLink>
                   <NavLink href="/community" icon={Users}>Сообщество</NavLink>
                   
@@ -250,6 +251,7 @@ export function Header() {
               </div>
               <MobileNavLink href="/progress" icon={BarChart3}>Мой прогресс</MobileNavLink>
               <MobileNavLink href="/activity" icon={Activity}>Активность</MobileNavLink>
+              <MobileNavLink href="/insights" icon={Target}>Аналитика</MobileNavLink>
               <MobileNavLink href="/profile" icon={User}>Профиль</MobileNavLink>
             </div>
             
