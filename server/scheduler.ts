@@ -344,21 +344,29 @@ export class Scheduler {
           const commits = await githubClient.getCommitsSince(repo.fullName);
           
           if (commits && commits.length > 0) {
-            totalCommits += commits.length;
-
-            // Track unique active days
+            // Only count commits by the repository owner
+            let userCommitCount = 0;
             commits.forEach(commit => {
               if (commit.commit?.author?.date) {
-                const commitDate = new Date(commit.commit.author.date);
-                const dayKey = commitDate.toISOString().split('T')[0]; // YYYY-MM-DD
-                activeDaysSet.add(dayKey);
+                // Check if this commit is by the user who owns the repository
+                const commitAuthor = commit.author?.login || commit.commit?.author?.name;
+                console.log(`Repository: ${repo.fullName}, User: ${user.username}, Commit author: ${commitAuthor}, Commits length: ${commits.length}`);
+                
+                if (commitAuthor && commitAuthor.toLowerCase() === user.username.toLowerCase()) {
+                  userCommitCount++;
+                  const commitDate = new Date(commit.commit.author.date);
+                  const dayKey = commitDate.toISOString().split('T')[0]; // YYYY-MM-DD
+                  activeDaysSet.add(dayKey);
 
-                // Track most recent activity
-                if (!lastActivityDate || commitDate > lastActivityDate) {
-                  lastActivityDate = commitDate;
+                  // Track most recent activity
+                  if (!lastActivityDate || commitDate > lastActivityDate) {
+                    lastActivityDate = commitDate;
+                  }
                 }
               }
             });
+            
+            totalCommits += userCommitCount;
           }
         } catch (error) {
           console.error(`Error fetching commits for ${repo.fullName}:`, error);
