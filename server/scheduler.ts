@@ -313,9 +313,23 @@ export class Scheduler {
   // Update user progress based on their repositories
   private async updateUserProgress(userId: number) {
     try {
+      const user = await storage.getUser(userId);
+      if (!user) {
+        console.error(`User not found: ${userId}`);
+        return;
+      }
+
       const repositories = await storage.getRepositoriesByUser(userId);
       
       if (repositories.length === 0) {
+        return;
+      }
+
+      // Set the correct GitHub token for this user
+      if (user.githubToken) {
+        githubClient.setToken(user.githubToken);
+      } else {
+        console.log(`No GitHub token for user: ${user.username}, skipping progress update`);
         return;
       }
 
@@ -326,7 +340,7 @@ export class Scheduler {
       // Calculate stats from all repositories
       for (const repo of repositories) {
         try {
-          // Get all commits from this repository
+          // Get all commits from this repository using user's token
           const commits = await githubClient.getCommitsSince(repo.fullName);
           
           if (commits && commits.length > 0) {
