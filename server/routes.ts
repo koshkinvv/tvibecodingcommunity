@@ -904,11 +904,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
 
-        results.usersChecked++;
-        
         // Get user's repositories
         const repositories = await storage.getRepositoriesByUser(user.id);
-        if (repositories.length === 0) continue;
+        
+        results.usersChecked++;
+        
+        if (repositories.length === 0) {
+          results.details.push({
+            user: user.username,
+            status: 'skipped',
+            reason: 'No repositories'
+          });
+          continue;
+        }
         
         // Initialize GitHub client with user's token
         if (user.githubToken) {
