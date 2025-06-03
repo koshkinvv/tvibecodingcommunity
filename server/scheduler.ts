@@ -118,8 +118,8 @@ export class Scheduler {
                   
                   console.log(`Generated summary for ${repo.fullName}: ${changesSummary}`);
                   
-                  // Only create activity feed entry if this is a real update (not initial run)
-                  if (repo.lastCommitSha) {
+                  // Create activity feed entry for both new and updated repositories
+                  if (newCommits.length > 0) {
                     // Create a single activity feed entry for the batch of commits
                     const latestCommit = newCommits[0]; // Most recent commit
                     const totalFilesChanged = newCommits.reduce((sum, commit) => sum + (commit.files?.length || 0), 0);
@@ -171,6 +171,21 @@ export class Scheduler {
               changesSummary,
               summaryGeneratedAt
             });
+            
+            // Generate repository description if not exists
+            if (!repo.description) {
+              try {
+                console.log(`Generating description for ${repo.fullName}`);
+                const description = await geminiService.generateProjectDescription(repo, user);
+                await storage.updateRepository(repo.id, {
+                  description,
+                  descriptionGeneratedAt: new Date()
+                });
+                console.log(`Generated description for ${repo.fullName}: ${description}`);
+              } catch (error) {
+                console.error(`Error generating description for ${repo.fullName}:`, error);
+              }
+            }
             
             // Track warning/inactive status
             if (status === 'warning') hasWarningRepos = true;
