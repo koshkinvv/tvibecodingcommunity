@@ -57,6 +57,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: 'Error logging in as user 2' });
     }
   });
+
+  // Add test user login endpoint for debugging
+  app.get('/api/test-login', async (req, res) => {
+    try {
+      const user = await storage.getUserByUsername('test_user');
+      if (user) {
+        // @ts-ignore - Set the user in session for testing
+        req.login(user, () => {
+          res.redirect('/');
+        });
+      } else {
+        res.status(404).json({ error: 'Test user not found' });
+      }
+    } catch (error) {
+      console.error('Error logging in test user:', error);
+      res.status(500).json({ error: 'Error logging in test user' });
+    }
+  });
   
   // Initialize the scheduler for daily checks
   scheduler.startDailyCheck();
