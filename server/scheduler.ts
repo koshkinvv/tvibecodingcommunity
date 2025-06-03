@@ -352,13 +352,9 @@ export class Scheduler {
                 const commitAuthor = commit.author?.login || commit.commit?.author?.name;
                 const commitAuthorGithubId = commit.author?.id?.toString();
                 
-                console.log(`Checking commit: author=${commitAuthor}, authorId=${commitAuthorGithubId}, user=${user.username}, userId=${user.githubId}`);
-                
                 // Match by GitHub username or GitHub ID
                 const isUserCommit = (commitAuthor && commitAuthor.toLowerCase() === user.username.toLowerCase()) ||
                                    (commitAuthorGithubId && commitAuthorGithubId === user.githubId);
-                
-                console.log(`Is user commit: ${isUserCommit}`);
                 
                 if (isUserCommit) {
                   userCommitCount++;
