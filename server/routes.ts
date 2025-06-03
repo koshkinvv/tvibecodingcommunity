@@ -6,7 +6,6 @@ import { githubClient } from "./github";
 import { scheduler } from "./scheduler";
 import { projectAnalyzer } from "./project-analyzer";
 import { geminiService } from "./gemini";
-import { recommendationEngine } from "./recommendation-engine";
 import { z } from "zod";
 import { insertRepositorySchema } from "@shared/schema";
 
@@ -711,25 +710,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching public projects:", error);
       res.status(500).json({ error: "Failed to fetch projects" });
-    }
-  });
-
-  // Get personalized AI recommendations - requires authentication
-  app.get("/api/recommendations", auth.isAuthenticated, async (req, res) => {
-    try {
-      const user = req.user as any;
-      console.log(`Generating recommendations for user: ${user.username}`);
-      
-      const recommendations = await recommendationEngine.generateRecommendations(user);
-      
-      res.json({
-        recommendations,
-        generatedAt: new Date(),
-        userId: user.id
-      });
-    } catch (error) {
-      console.error("Error generating recommendations:", error);
-      res.status(500).json({ error: "Failed to generate recommendations" });
     }
   });
 
