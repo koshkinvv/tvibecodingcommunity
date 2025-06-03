@@ -337,21 +337,15 @@ export class Scheduler {
       const activeDaysSet = new Set<string>();
       let lastActivityDate: Date | null = null;
 
-      console.log(`=== ANALYZING USER: ${user.username} ===`);
-      
       // Calculate stats from all repositories
       for (const repo of repositories) {
         try {
-          console.log(`Checking repository: ${repo.fullName}`);
           // Get all commits from this repository using user's token
           const commits = await githubClient.getCommitsSince(repo.fullName);
-          
-          console.log(`Total commits fetched from ${repo.fullName}: ${commits?.length || 0}`);
           
           if (commits && commits.length > 0) {
             // Only count commits by the repository owner
             let userCommitCount = 0;
-            let otherCommitCount = 0;
             
             commits.forEach(commit => {
               if (commit.commit?.author?.date) {
@@ -371,23 +365,16 @@ export class Scheduler {
                   if (!lastActivityDate || commitDate > lastActivityDate) {
                     lastActivityDate = commitDate;
                   }
-                } else {
-                  otherCommitCount++;
                 }
               }
             });
             
-            console.log(`In ${repo.fullName}: ${userCommitCount} commits by ${user.username}, ${otherCommitCount} by others`);
             totalCommits += userCommitCount;
-          } else {
-            console.log(`No commits found in ${repo.fullName}`);
           }
         } catch (error) {
           console.error(`Error fetching commits for ${repo.fullName}:`, error);
         }
       }
-      
-      console.log(`FINAL STATS for ${user.username}: ${totalCommits} total commits, ${activeDaysSet.size} active days`);
 
       const activeDays = activeDaysSet.size;
 

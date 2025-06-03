@@ -108,7 +108,6 @@ export class GitHubClient {
       } else {
         // Если нет предыдущего коммита, берем последние 100 коммитов для полной статистики
         params.append('per_page', '100');
-        console.log(`[GitHub API] Fetching commits for ${fullName} with per_page=100`);
       }
 
       if (params.toString()) {
