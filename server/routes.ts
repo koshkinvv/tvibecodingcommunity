@@ -360,21 +360,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const lastCommitDate = await githubClient.getLastCommitDate(repository);
         const status = githubClient.calculateRepositoryStatus(lastCommitDate);
         
-        // Generate AI description for the project
+        // Generate AI analysis for the project
         let description = null;
         let descriptionGeneratedAt = null;
+        let tags = [];
+        let analysisData = null;
+        
         try {
-          description = await geminiService.generateProjectDescription(repository, user);
+          const analysis = await projectAnalyzer.analyzeRepository(repository, user);
+          description = analysis.description;
+          tags = analysis.tags;
+          analysisData = analysis;
           descriptionGeneratedAt = new Date();
         } catch (error) {
-          console.error("Error generating project description:", error);
+          console.error("Error analyzing project:", error);
+          // Fallback to simple description generation
+          try {
+            description = await geminiService.generateProjectDescription(repository, user);
+            descriptionGeneratedAt = new Date();
+          } catch (fallbackError) {
+            console.error("Error generating fallback description:", fallbackError);
+          }
         }
         
         await storage.updateRepository(repository.id, {
           lastCommitDate,
           status,
           description,
-          descriptionGeneratedAt
+          descriptionGeneratedAt,
+          tags,
+          analysisData
         });
         
         // Return updated repository
