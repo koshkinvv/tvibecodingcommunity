@@ -56,7 +56,7 @@ export default function HomePage() {
                 <CardContent className="px-4 py-5 sm:p-6">
                   <dl>
                     <dt className="text-sm font-medium text-gray-500 truncate">
-                      Total Repositories
+                      Всего репозиториев
                     </dt>
                     <dd className="mt-1 text-3xl font-semibold text-gray-900">
                       {statsLoading ? (
@@ -74,7 +74,7 @@ export default function HomePage() {
                 <CardContent className="px-4 py-5 sm:p-6">
                   <dl>
                     <dt className="text-sm font-medium text-gray-500 truncate">
-                      Viber of the Week
+                      Вайбер недели
                     </dt>
                     <dd className="mt-1 text-xl font-semibold text-gray-900 flex items-center">
                       {statsLoading ? (
@@ -97,7 +97,7 @@ export default function HomePage() {
                           <span>{stats.viberOfTheWeek.name || stats.viberOfTheWeek.username}</span>
                         </>
                       ) : (
-                        <span className="text-gray-500">No viber this week</span>
+                        <span className="text-gray-500">Нет вайбера на этой неделе</span>
                       )}
                     </dd>
                   </dl>
@@ -107,20 +107,20 @@ export default function HomePage() {
 
             {/* About Section */}
             <div className="mt-6">
-              <h3 className="text-lg font-medium text-gray-900">About Vibe Coding Community</h3>
+              <h3 className="text-lg font-medium text-gray-900">О сообществе Vibe Coding</h3>
               <div className="mt-2 text-sm text-gray-500">
-                <p>Vibe Coding is a community where members commit to consistent coding practice. We track activity through GitHub commits, ensuring everyone stays active by contributing to their projects at least once every two weeks.</p>
+                <p>Vibe Coding — это сообщество, где участники обязуются поддерживать постоянную практику программирования. Мы отслеживаем активность через коммиты GitHub, обеспечивая активность каждого участника через вклад в свои проекты минимум раз в две недели.</p>
                 <div className="mt-4">
                   {!user ? (
                     <Link href="/login">
                       <Button>
-                        Join the Community
+                        Присоединиться к сообществу
                       </Button>
                     </Link>
                   ) : (
                     <Link href="/profile">
                       <Button>
-                        Go to Your Profile
+                        Перейти в профиль
                       </Button>
                     </Link>
                   )}
@@ -207,7 +207,7 @@ export default function HomePage() {
         </div>
 
         {/* Featured Members */}
-        <h3 className="mt-8 text-lg font-medium text-gray-900">Featured Community Members</h3>
+        <h3 className="mt-8 text-lg font-medium text-gray-900">Рекомендуемые участники сообщества</h3>
         <div className="mt-2 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3" data-onboarding="featured-members">
           {membersLoading ? (
             // Loading skeleton
@@ -240,7 +240,7 @@ export default function HomePage() {
                     </Avatar>
                     <div className="ml-3">
                       <h3 className="text-sm font-medium text-gray-900">{member.name || member.username}</h3>
-                      <p className="text-xs text-gray-500">{member.activeRepoCount} active repositories</p>
+                      <p className="text-xs text-gray-500">{member.activeRepoCount} активных репозиториев</p>
                     </div>
                     <div className="ml-auto">
                       <StatusBadge status="active" />
@@ -251,7 +251,7 @@ export default function HomePage() {
             ))
           ) : (
             <div className="col-span-3 text-center py-10">
-              <p className="text-gray-500">No featured members yet</p>
+              <p className="text-gray-500">Пока нет рекомендуемых участников</p>
             </div>
           )}
         </div>
