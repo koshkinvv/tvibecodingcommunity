@@ -1374,6 +1374,234 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.status(500).json({ error: "Failed to trigger repository check" });
       }
     });
+
+    // Create test user with sample repositories for debugging
+    app.post("/api/dev/create-test-user", async (req, res) => {
+      try {
+        console.log('Creating test user for debugging...');
+        
+        // Create test user
+        const testUser = await storage.createUser({
+          githubId: 'test-user-' + Date.now(),
+          username: 'testuser',
+          email: 'test@example.com',
+          name: 'Test Developer',
+          avatarUrl: 'https://avatars.githubusercontent.com/u/1?v=4',
+          githubToken: null,
+          telegramId: null,
+          notificationPreference: 'email',
+          onVacation: false,
+          vacationUntil: null,
+          isAdmin: false
+        });
+
+        console.log('Test user created:', testUser.id);
+
+        // Create sample repositories with different types for testing
+        const sampleRepos = [
+          {
+            name: 'react-portfolio',
+            fullName: 'testuser/react-portfolio',
+            description: 'Современное портфолио разработчика на React с анимациями и адаптивным дизайном',
+            tags: ['javascript', 'react', 'веб-сайт', 'портфолио'],
+            analysisData: {
+              description: 'Современное портфолио разработчика на React с анимациями и адаптивным дизайном',
+              tags: ['javascript', 'react', 'веб-сайт', 'портфолио'],
+              category: 'веб-разработка',
+              techStack: ['react', 'javascript', 'css'],
+              complexity: 'intermediate',
+              features: ['адаптивный дизайн', 'анимации', 'SEO-оптимизация'],
+              recommendations: ['Добавить PWA функции', 'Оптимизировать изображения']
+            }
+          },
+          {
+            name: 'python-data-analyzer',
+            fullName: 'testuser/python-data-analyzer',
+            description: 'Инструмент для анализа данных с машинным обучением и визуализацией результатов',
+            tags: ['python', 'данные', 'машинное-обучение', 'аналитика'],
+            analysisData: {
+              description: 'Инструмент для анализа данных с машинным обучением и визуализацией результатов',
+              tags: ['python', 'данные', 'машинное-обучение', 'аналитика'],
+              category: 'аналитика',
+              techStack: ['python', 'pandas', 'scikit-learn'],
+              complexity: 'advanced',
+              features: ['машинное обучение', 'визуализация', 'обработка данных'],
+              recommendations: ['Добавить Docker контейнеризацию', 'Создать API для внешнего использования']
+            }
+          },
+          {
+            name: 'mobile-todo-app',
+            fullName: 'testuser/mobile-todo-app',
+            description: 'Мобильное приложение для управления задачами с синхронизацией в облаке',
+            tags: ['javascript', 'react-native', 'мобильное-приложение', 'продуктивность'],
+            analysisData: {
+              description: 'Мобильное приложение для управления задачами с синхронизацией в облаке',
+              tags: ['javascript', 'react-native', 'мобильное-приложение', 'продуктивность'],
+              category: 'мобильные приложения',
+              techStack: ['react-native', 'javascript', 'firebase'],
+              complexity: 'intermediate',
+              features: ['синхронизация', 'оффлайн режим', 'уведомления'],
+              recommendations: ['Добавить темную тему', 'Реализовать категории задач']
+            }
+          },
+          {
+            name: 'game-engine-2d',
+            fullName: 'testuser/game-engine-2d',
+            description: 'Легковесный 2D игровой движок на C++ для создания инди-игр',
+            tags: ['cpp', 'игра', 'движок', 'разработка-игр'],
+            analysisData: {
+              description: 'Легковесный 2D игровой движок на C++ для создания инди-игр',
+              tags: ['cpp', 'игра', 'движок', 'разработка-игр'],
+              category: 'игры',
+              techStack: ['cpp', 'opengl', 'sdl'],
+              complexity: 'advanced',
+              features: ['физика', 'рендеринг', 'звуковая система'],
+              recommendations: ['Добавить редактор уровней', 'Создать документацию API']
+            }
+          },
+          {
+            name: 'simple-calculator',
+            fullName: 'testuser/simple-calculator',
+            description: 'Простой калькулятор для изучения основ программирования',
+            tags: ['python', 'утилита', 'обучение'],
+            analysisData: {
+              description: 'Простой калькулятор для изучения основ программирования',
+              tags: ['python', 'утилита', 'обучение'],
+              category: 'утилиты',
+              techStack: ['python'],
+              complexity: 'beginner',
+              features: ['базовые операции', 'простой интерфейс'],
+              recommendations: ['Добавить научные функции', 'Создать GUI интерфейс']
+            }
+          }
+        ];
+
+        const createdRepos = [];
+        for (const repoData of sampleRepos) {
+          const repo = await storage.createRepository({
+            userId: testUser.id,
+            name: repoData.name,
+            fullName: repoData.fullName,
+            lastCommitDate: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000)
+          });
+          
+          // Update repository with all data including status
+          await storage.updateRepository(repo.id, { 
+            status: 'active',
+            description: repoData.description,
+            descriptionGeneratedAt: new Date(),
+            tags: repoData.tags,
+            analysisData: repoData.analysisData,
+            isPublic: true
+          });
+          createdRepos.push(repo);
+        }
+
+        // Create user progress
+        await storage.createUserProgress({
+          userId: testUser.id,
+          totalCommits: 150,
+          activeDays: 12,
+          currentStreak: 5,
+          longestStreak: 8,
+          level: 8,
+          experience: 750,
+          badges: ['early-adopter', 'consistent-coder']
+        });
+
+        console.log(`Created test user with ${createdRepos.length} repositories`);
+
+        res.json({
+          success: true,
+          message: 'Test user created successfully',
+          user: {
+            id: testUser.id,
+            username: testUser.username,
+            name: testUser.name
+          },
+          repositories: createdRepos.map(r => ({
+            id: r.id,
+            name: r.name,
+            fullName: r.fullName,
+            tags: r.tags
+          }))
+        });
+      } catch (error) {
+        console.error("Error creating test user:", error);
+        res.status(500).json({ 
+          error: "Failed to create test user", 
+          details: error instanceof Error ? error.message : String(error) 
+        });
+      }
+    });
+
+    // Test project analyzer with existing repository
+    app.post("/api/dev/test-analyzer/:repoId", async (req, res) => {
+      try {
+        const repoId = parseInt(req.params.repoId);
+        const repository = await storage.getRepository(repoId);
+        
+        if (!repository) {
+          return res.status(404).json({ error: 'Repository not found' });
+        }
+
+        const user = await storage.getUser(repository.userId);
+        if (!user) {
+          return res.status(404).json({ error: 'User not found' });
+        }
+
+        console.log(`Testing analyzer for repository: ${repository.fullName}`);
+        
+        const analysis = await projectAnalyzer.analyzeRepository(repository, user);
+        
+        // Update repository with analysis results
+        await storage.updateRepository(repoId, {
+          description: analysis.description,
+          descriptionGeneratedAt: new Date(),
+          tags: analysis.tags,
+          analysisData: analysis
+        });
+
+        res.json({
+          success: true,
+          analysis,
+          repository: {
+            id: repository.id,
+            name: repository.name,
+            fullName: repository.fullName
+          }
+        });
+      } catch (error) {
+        console.error("Error testing analyzer:", error);
+        res.status(500).json({ 
+          error: "Failed to test analyzer", 
+          details: error instanceof Error ? error.message : String(error) 
+        });
+      }
+    });
+
+    // Quick login as test user for debugging
+    app.get('/api/dev/login-test-user', async (req, res) => {
+      try {
+        const testUser = await storage.getUserByUsername('testuser');
+        if (testUser) {
+          // @ts-ignore - Set the test user in session for debugging
+          req.login(testUser, () => {
+            res.redirect('/');
+          });
+        } else {
+          res.status(404).json({ error: 'Test user not found. Create one first using /api/dev/create-test-user' });
+        }
+      } catch (error) {
+        console.error("Error logging in as test user:", error);
+        res.status(500).json({ error: "Failed to login as test user" });
+      }
+    });
+
+    // Serve debug test page
+    app.get('/debug', (req, res) => {
+      res.sendFile(require('path').join(process.cwd(), 'debug-test.html'));
+    });
   }
   
   const httpServer = createServer(app);
