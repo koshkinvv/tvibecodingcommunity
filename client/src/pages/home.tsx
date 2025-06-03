@@ -127,6 +127,82 @@ export default function HomePage() {
                 </div>
               </div>
             </div>
+
+            {/* Getting Started Section - only show for authenticated users */}
+            {user && (
+              <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
+                <h3 className="text-lg font-medium text-blue-900 mb-4">🚀 Добро пожаловать! Как начать:</h3>
+                
+                <div className="space-y-4">
+                  <div className="flex items-start space-x-3">
+                    <div className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-semibold">
+                      1
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-blue-900">Привяжите репозитории</h4>
+                      <p className="text-sm text-blue-700 mt-1">
+                        Перейдите в <Link href="/profile" className="underline hover:text-blue-800">ваш профиль</Link> и добавьте ваши GitHub репозитории для отслеживания активности.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start space-x-3">
+                    <div className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-semibold">
+                      2
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-blue-900">Делайте коммиты регулярно</h4>
+                      <p className="text-sm text-blue-700 mt-1">
+                        Система автоматически отслеживает ваши коммиты в GitHub. Делайте хотя бы один коммит каждые 2 недели, чтобы оставаться активным.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start space-x-3">
+                    <div className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-semibold">
+                      3
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-blue-900">Отслеживайте прогресс</h4>
+                      <p className="text-sm text-blue-700 mt-1">
+                        Смотрите свой <Link href="/progress" className="underline hover:text-blue-800">прогресс</Link>, набирайте XP за коммиты и соревнуйтесь в <Link href="/activity" className="underline hover:text-blue-800">рейтинге активности</Link>.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start space-x-3">
+                    <div className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-semibold">
+                      4
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-blue-900">Взаимодействуйте с сообществом</h4>
+                      <p className="text-sm text-blue-700 mt-1">
+                        Просматривайте <Link href="/community" className="underline hover:text-blue-800">публичные репозитории</Link> других участников, оставляйте комментарии и изучайте интересные проекты.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-6 flex flex-wrap gap-3">
+                  <Link href="/profile">
+                    <Button className="bg-blue-600 hover:bg-blue-700">
+                      Добавить репозитории
+                    </Button>
+                  </Link>
+                  <Link href="/progress">
+                    <Button variant="outline" className="border-blue-300 text-blue-700 hover:bg-blue-100">
+                      Посмотреть прогресс
+                    </Button>
+                  </Link>
+                </div>
+
+                <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-md">
+                  <p className="text-sm text-amber-800">
+                    <strong>Важно:</strong> Убедитесь, что ваши репозитории публичные или у вас есть соответствующие права доступа, чтобы система могла отслеживать коммиты.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

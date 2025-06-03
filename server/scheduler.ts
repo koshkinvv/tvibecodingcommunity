@@ -452,14 +452,7 @@ export class Scheduler {
                   
                   isUserCommit = exactUsernameMatch || exactNameMatch || authorContainsUsername || usernameContainsAuthor || similarityMatch;
                   
-                  // Debug logging for problematic users
-                  if (user.username === 'koshkinvv' && !isUserCommit) {
-                    console.log(`[DEBUG] No match for user ${user.username}: author="${commitAuthorName}", username="${user.username}", name="${user.name}"`);
-                  }
-                  
-                  if (user.username === 'koshkinvv' && isUserCommit) {
-                    console.log(`[DEBUG] MATCHED for user ${user.username}: author="${commitAuthorName}"`);
-                  }
+
                 }
                 
                 if (isUserCommit) {
