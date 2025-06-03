@@ -350,9 +350,17 @@ export class Scheduler {
               if (commit.commit?.author?.date) {
                 // Check if this commit is by the user who owns the repository
                 const commitAuthor = commit.author?.login || commit.commit?.author?.name;
-                console.log(`Repository: ${repo.fullName}, User: ${user.username}, Commit author: ${commitAuthor}, Commits length: ${commits.length}`);
+                const commitAuthorGithubId = commit.author?.id?.toString();
                 
-                if (commitAuthor && commitAuthor.toLowerCase() === user.username.toLowerCase()) {
+                console.log(`Checking commit: author=${commitAuthor}, authorId=${commitAuthorGithubId}, user=${user.username}, userId=${user.githubId}`);
+                
+                // Match by GitHub username or GitHub ID
+                const isUserCommit = (commitAuthor && commitAuthor.toLowerCase() === user.username.toLowerCase()) ||
+                                   (commitAuthorGithubId && commitAuthorGithubId === user.githubId);
+                
+                console.log(`Is user commit: ${isUserCommit}`);
+                
+                if (isUserCommit) {
                   userCommitCount++;
                   const commitDate = new Date(commit.commit.author.date);
                   const dayKey = commitDate.toISOString().split('T')[0]; // YYYY-MM-DD
