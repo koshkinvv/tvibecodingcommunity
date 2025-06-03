@@ -106,8 +106,8 @@ export class GitHubClient {
           params.append('since', sinceCommit.commit.author.date);
         }
       } else {
-        // Если нет предыдущего коммита, берем последние 10 коммитов
-        params.append('per_page', '10');
+        // Если нет предыдущего коммита, берем последние 100 коммитов для полной статистики
+        params.append('per_page', '100');
       }
 
       if (params.toString()) {
@@ -129,9 +129,10 @@ export class GitHubClient {
         ? commits.filter((commit: any) => commit.sha !== sinceCommitSha)
         : commits;
 
-      // Получаем детальную информацию о каждом коммите
+      // Для активности берем только последние 5 коммитов с деталями
+      const recentCommitsForActivity = filteredCommits.slice(0, 5);
       const detailedCommits = await Promise.all(
-        filteredCommits.slice(0, 5).map(async (commit: any) => {
+        recentCommitsForActivity.map(async (commit: any) => {
           try {
             const detailResponse = await fetch(`${this.baseUrl}/repos/${fullName}/commits/${commit.sha}`, {
               headers: this.getHeaders()
@@ -148,7 +149,13 @@ export class GitHubClient {
         })
       );
 
-      return detailedCommits;
+      // Возвращаем все коммиты для правильного подсчета статистики
+      return filteredCommits.map((commit, index) => {
+        if (index < 5 && detailedCommits[index]) {
+          return detailedCommits[index];
+        }
+        return commit;
+      });
     } catch (error) {
       console.error(`Error fetching commits for ${fullName}:`, error);
       return [];
