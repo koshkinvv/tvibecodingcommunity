@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { StatusBadge } from '@/components/status-badge';
 import { useAuth } from '@/hooks/use-auth';
 import { UserStats, FeaturedMember } from '@/lib/types';
+import { BookOpen } from 'lucide-react';
 
 export default function HomePage() {
   const { user } = useAuth();
@@ -18,6 +19,12 @@ export default function HomePage() {
   // Fetch featured members
   const { data: featuredMembers, isLoading: membersLoading } = useQuery<FeaturedMember[]>({
     queryKey: ['/api/members/featured'],
+  });
+
+  // Fetch user's repositories to check if onboarding is needed
+  const { data: userRepositories, isLoading: repositoriesLoading } = useQuery({
+    queryKey: [`/api/repositories/user/${user?.id}`],
+    enabled: !!user,
   });
 
   return (
@@ -128,78 +135,107 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Getting Started Section - only show for authenticated users */}
-            {user && (
-              <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
-                <h3 className="text-lg font-medium text-blue-900 mb-4">🚀 Добро пожаловать! Как начать:</h3>
+            {/* Onboarding Section - show for users without repositories */}
+            {user && !repositoriesLoading && userRepositories && userRepositories.length === 0 && (
+              <div className="mt-8 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6 shadow-sm">
+                <div className="flex items-start space-x-4">
+                  <div className="flex-shrink-0">
+                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                      <BookOpen className="h-6 w-6 text-blue-600" />
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-blue-900 mb-2">Добро пожаловать в Vibe Coding!</h3>
+                    <p className="text-blue-800 mb-4">Начните отслеживать свою активность в разработке, подключив GitHub репозитории.</p>
+                    
+                    <div className="bg-white rounded-lg p-4 mb-4 border border-blue-100">
+                      <h4 className="font-medium text-gray-900 mb-3">Что вы получите:</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          <span className="text-sm text-gray-700">Автоматический подсчет коммитов</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          <span className="text-sm text-gray-700">Отслеживание серий активности</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          <span className="text-sm text-gray-700">Система уровней и опыта</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          <span className="text-sm text-gray-700">Участие в рейтинге сообщества</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <Link href="/profile">
+                        <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                          Подключить репозитории
+                        </Button>
+                      </Link>
+                      <Link href="/progress">
+                        <Button variant="outline" className="border-blue-300 text-blue-700 hover:bg-blue-50">
+                          Узнать больше о системе
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Tips Section - show for users with repositories */}
+            {user && !repositoriesLoading && userRepositories && userRepositories.length > 0 && (
+              <div className="mt-8 bg-green-50 border border-green-200 rounded-lg p-6">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                    <BookOpen className="h-5 w-5 text-green-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-green-900">Отлично! У вас подключено {userRepositories.length} репозиториев</h3>
+                    <p className="text-sm text-green-700">Система отслеживает вашу активность и обновляет статистику ежедневно</p>
+                  </div>
+                </div>
                 
-                <div className="space-y-4">
-                  <div className="flex items-start space-x-3">
-                    <div className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-semibold">
-                      1
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-blue-900">Привяжите репозитории</h4>
-                      <p className="text-sm text-blue-700 mt-1">
-                        Перейдите в <Link href="/profile" className="underline hover:text-blue-800">ваш профиль</Link> и добавьте ваши GitHub репозитории для отслеживания активности.
-                      </p>
-                    </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-white rounded-lg p-4 border border-green-100">
+                    <h4 className="font-medium text-gray-900 mb-2">Следующие шаги:</h4>
+                    <ul className="space-y-2 text-sm text-gray-700">
+                      <li className="flex items-center space-x-2">
+                        <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+                        <span>Проверьте свой <Link href="/progress" className="text-green-600 hover:text-green-700 underline">прогресс</Link></span>
+                      </li>
+                      <li className="flex items-center space-x-2">
+                        <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+                        <span>Изучите <Link href="/activity" className="text-green-600 hover:text-green-700 underline">активность сообщества</Link></span>
+                      </li>
+                      <li className="flex items-center space-x-2">
+                        <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+                        <span>Посетите <Link href="/community" className="text-green-600 hover:text-green-700 underline">проекты участников</Link></span>
+                      </li>
+                    </ul>
                   </div>
-
-                  <div className="flex items-start space-x-3">
-                    <div className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-semibold">
-                      2
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-blue-900">Делайте коммиты регулярно</h4>
-                      <p className="text-sm text-blue-700 mt-1">
-                        Система автоматически отслеживает ваши коммиты в GitHub. Делайте хотя бы один коммит каждые 2 недели, чтобы оставаться активным.
-                      </p>
-                    </div>
+                  
+                  <div className="bg-white rounded-lg p-4 border border-green-100">
+                    <h4 className="font-medium text-gray-900 mb-2">Полезные советы:</h4>
+                    <ul className="space-y-2 text-sm text-gray-700">
+                      <li className="flex items-center space-x-2">
+                        <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                        <span>Делайте коммиты регулярно для поддержания серии</span>
+                      </li>
+                      <li className="flex items-center space-x-2">
+                        <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                        <span>Каждый коммит приносит 10 XP</span>
+                      </li>
+                      <li className="flex items-center space-x-2">
+                        <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                        <span>Добавьте больше репозиториев в <Link href="/profile" className="text-blue-600 hover:text-blue-700 underline">профиле</Link></span>
+                      </li>
+                    </ul>
                   </div>
-
-                  <div className="flex items-start space-x-3">
-                    <div className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-semibold">
-                      3
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-blue-900">Отслеживайте прогресс</h4>
-                      <p className="text-sm text-blue-700 mt-1">
-                        Смотрите свой <Link href="/progress" className="underline hover:text-blue-800">прогресс</Link>, набирайте XP за коммиты и соревнуйтесь в <Link href="/activity" className="underline hover:text-blue-800">рейтинге активности</Link>.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start space-x-3">
-                    <div className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-semibold">
-                      4
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-blue-900">Взаимодействуйте с сообществом</h4>
-                      <p className="text-sm text-blue-700 mt-1">
-                        Просматривайте <Link href="/community" className="underline hover:text-blue-800">публичные репозитории</Link> других участников, оставляйте комментарии и изучайте интересные проекты.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-6 flex flex-wrap gap-3">
-                  <Link href="/profile">
-                    <Button className="bg-blue-600 hover:bg-blue-700">
-                      Добавить репозитории
-                    </Button>
-                  </Link>
-                  <Link href="/progress">
-                    <Button variant="outline" className="border-blue-300 text-blue-700 hover:bg-blue-100">
-                      Посмотреть прогресс
-                    </Button>
-                  </Link>
-                </div>
-
-                <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-md">
-                  <p className="text-sm text-amber-800">
-                    <strong>Важно:</strong> Убедитесь, что ваши репозитории публичные или у вас есть соответствующие права доступа, чтобы система могла отслеживать коммиты.
-                  </p>
                 </div>
               </div>
             )}
