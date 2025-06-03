@@ -877,6 +877,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Helper function for manual repository check
   async function triggerManualRepositoryCheck() {
+    console.log('Starting manual repository check...');
+    
     const results = {
       usersChecked: 0,
       repositoriesUpdated: 0,
@@ -887,6 +889,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Get all users (except those on vacation)
       const users = await storage.getUsers();
+      console.log(`Found ${users.length} total users in database`);
       
       for (const user of users) {
         // Skip users on vacation
@@ -918,34 +921,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
           continue;
         }
         
-        // Initialize GitHub client with user's token
+        // Initialize GitHub client with user's token or use public API
+        let hasToken = false;
         if (user.githubToken) {
           githubClient.setToken(user.githubToken);
+          hasToken = true;
         } else {
-          // Skip if we don't have a token
-          console.log(`No GitHub token for user: ${user.username}, skipping`);
-          results.details.push({
-            user: user.username,
-            status: 'skipped',
-            reason: 'No GitHub token'
-          });
-          continue;
+          // Use public API without token (has rate limits)
+          githubClient.setToken('');
+          console.log(`No GitHub token for user: ${user.username}, using public API`);
         }
 
         // Update each repository's status
         for (const repo of repositories) {
           try {
+            console.log(`Checking repository: ${repo.fullName} for user: ${user.username}`);
+            
             // Get latest commit information
             const latestCommit = await githubClient.getLatestCommit(repo.fullName);
             
             if (!latestCommit) {
               console.log(`No commits found for repository ${repo.fullName}`);
+              results.details.push({
+                user: user.username,
+                repository: repo.fullName,
+                status: 'skipped',
+                reason: 'No commits found'
+              });
               continue;
             }
 
             const lastCommitDate = new Date(latestCommit.commit.author.date);
             const newCommitSha = latestCommit.sha;
             const newStatus = githubClient.calculateRepositoryStatus(lastCommitDate);
+            
+            console.log(`Repository ${repo.fullName}: commit ${newCommitSha}, status ${newStatus}, date ${lastCommitDate.toISOString()}`);
             
             // Check if we need to update the repository
             const needsUpdate = 
@@ -985,13 +995,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
               });
               
               results.repositoriesUpdated++;
+              console.log(`Updated repository ${repo.fullName}: ${repo.status} -> ${newStatus}`);
+              
               results.details.push({
                 user: user.username,
                 repository: repo.fullName,
                 oldStatus: repo.status,
                 newStatus: newStatus,
                 lastCommit: lastCommitDate?.toISOString(),
-                hasSummary: !!changesSummary
+                hasSummary: !!changesSummary,
+                updated: true
+              });
+            } else {
+              console.log(`Repository ${repo.fullName} is up to date (status: ${repo.status})`);
+              results.details.push({
+                user: user.username,
+                repository: repo.fullName,
+                status: 'unchanged',
+                currentStatus: repo.status,
+                updated: false
               });
             }
           } catch (error) {
