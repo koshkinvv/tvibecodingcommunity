@@ -1022,16 +1022,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 let userCommitCount = 0;
                 commits.forEach((commit, index) => {
                   if (commit.commit?.author?.date) {
-                    // Check if this commit is by the user who owns the repository
-                    const commitAuthorGithubId = commit.author?.id?.toString();
-                    const commitAuthor = commit.author?.login;
+                    // GitHub API structure: commit.author is null but commit.commit.author has the info
+                    const commitAuthorName = commit.commit?.author?.name;
+                    const commitAuthorEmail = commit.commit?.author?.email;
                     
                     if (index < 3) { // Debug first 3 commits
-                      console.log(`[ADMIN] Commit ${index}: author=${commitAuthor}, authorId=${commitAuthorGithubId}, looking for userId=${user.githubId}`);
+                      console.log(`[ADMIN] Commit ${index}: authorName=${commitAuthorName}, authorEmail=${commitAuthorEmail}, looking for username=${user.username}`);
                     }
                     
-                    // Match by GitHub ID (most reliable)
-                    const isUserCommit = commitAuthorGithubId && commitAuthorGithubId === user.githubId;
+                    // Match by author name (GitHub username)
+                    const isUserCommit = commitAuthorName && commitAuthorName.toLowerCase() === user.username.toLowerCase();
                     
                     if (isUserCommit) {
                       userCommitCount++;
