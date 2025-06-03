@@ -367,15 +367,20 @@ export default function ProjectsPage() {
           <Card>
             <CardContent className="p-8 text-center">
               <GitBranch className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Пока нет проектов</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                {allProjects && allProjects.length > 0 ? "Нет проектов по выбранным фильтрам" : "Пока нет проектов"}
+              </h3>
               <p className="text-gray-600">
-                Добавьте свой первый репозиторий, чтобы поделиться проектом с сообществом
+                {allProjects && allProjects.length > 0 
+                  ? "Попробуйте изменить критерии фильтрации"
+                  : "Добавьте свой первый репозиторий, чтобы поделиться проектом с сообществом"
+                }
               </p>
             </CardContent>
           </Card>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {projects?.map((project) => (
+            {filteredProjects?.map((project: Repository) => (
               <Card key={project.id} className="h-fit">
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
@@ -409,6 +414,46 @@ export default function ProjectsPage() {
                           Описание создано AI
                         </p>
                       )}
+                    </div>
+                  )}
+
+                  {/* Project tags */}
+                  {project.tags && project.tags.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Tag className="h-4 w-4 text-gray-500" />
+                        <span className="text-sm font-medium text-gray-700">Теги</span>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {project.tags.map((tag, index) => (
+                          <Badge key={index} variant="secondary" className="text-xs">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Analysis data - complexity and category */}
+                  {project.analysisData && (
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap gap-4 text-xs text-gray-600">
+                        {project.analysisData.category && (
+                          <span className="flex items-center gap-1">
+                            <span className="font-medium">Категория:</span>
+                            {project.analysisData.category}
+                          </span>
+                        )}
+                        {project.analysisData.complexity && (
+                          <span className="flex items-center gap-1">
+                            <span className="font-medium">Сложность:</span>
+                            {project.analysisData.complexity === 'beginner' ? 'Начинающий' :
+                             project.analysisData.complexity === 'intermediate' ? 'Средний' :
+                             project.analysisData.complexity === 'advanced' ? 'Продвинутый' :
+                             project.analysisData.complexity}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   )}
 
