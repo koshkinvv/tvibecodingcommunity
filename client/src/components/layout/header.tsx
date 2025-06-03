@@ -192,21 +192,28 @@ export function Header() {
               </div>
             </div>
             <div className="mt-3 space-y-1">
-              <Link href="/profile" className="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100">
+              <Link href="/profile" className="flex items-center gap-3 px-4 py-2 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors">
+                <User className="h-5 w-5" />
                 Ваш профиль
+              </Link>
+              <Link href="/progress" className="flex items-center gap-3 px-4 py-2 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors">
+                <BarChart3 className="h-5 w-5" />
+                Мой прогресс
               </Link>
               <button
                 onClick={logout}
-                className="block w-full text-left px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100"
+                className="flex items-center gap-3 w-full text-left px-4 py-2 text-base font-medium text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors"
               >
+                <LogOut className="h-5 w-5" />
                 Выйти
               </button>
             </div>
           </div>
         ) : (
-          <div className="pt-4 pb-3 border-t border-gray-200">
+          <div className="pt-4 pb-3 border-t border-gray-200 bg-gray-50">
             <div className="px-4">
-              <Link href="/login" className="block text-center px-4 py-2 rounded-md text-base font-medium text-white bg-primary hover:bg-primary-700">
+              <Link href="/login" className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-base font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors">
+                <Github className="h-5 w-5" />
                 Войти через GitHub
               </Link>
             </div>
