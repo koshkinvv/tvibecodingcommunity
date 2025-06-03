@@ -49,7 +49,7 @@ export function Header() {
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link href="/" className="flex-shrink-0 flex items-center">
-              <span className="text-2xl font-bold text-primary">TVibe<span className="text-gray-700">coding</span></span>
+              <span className="text-2xl font-bold text-[#ffdd00]">TVibe<span className="text-gray-700">coding</span></span>
             </Link>
             <nav className="hidden sm:ml-10 sm:flex space-x-8" data-onboarding="navigation">
               <NavLink href="/">Home</NavLink>
@@ -127,7 +127,6 @@ export function Header() {
           </div>
         </div>
       </div>
-
       {/* Mobile menu */}
       <div className={`sm:hidden ${mobileMenuOpen ? '' : 'hidden'}`} id="mobile-menu">
         <div className="pt-2 pb-3 space-y-1">
