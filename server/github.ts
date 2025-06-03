@@ -92,70 +92,70 @@ export class GitHubClient {
 
   async getCommitsSince(fullName: string, sinceCommitSha?: string): Promise<any[]> {
     try {
-      let url = `${this.baseUrl}/repos/${fullName}/commits`;
-      const params = new URLSearchParams();
-      
       if (sinceCommitSha) {
         // Получаем коммиты с определенной даты
         const sinceCommitResponse = await fetch(`${this.baseUrl}/repos/${fullName}/commits/${sinceCommitSha}`, {
           headers: this.getHeaders()
         });
         
+        let url = `${this.baseUrl}/repos/${fullName}/commits`;
+        const params = new URLSearchParams();
+        
         if (sinceCommitResponse.ok) {
           const sinceCommit = await sinceCommitResponse.json();
           params.append('since', sinceCommit.commit.author.date);
         }
-      } else {
-        // Если нет предыдущего коммита, берем последние 100 коммитов для полной статистики
-        params.append('per_page', '100');
-      }
-
-      if (params.toString()) {
-        url += '?' + params.toString();
-      }
-
-      const response = await fetch(url, {
-        headers: this.getHeaders()
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch commits: ${response.status}`);
-      }
-
-      const commits = await response.json();
-      
-      // Фильтруем коммиты, исключая sinceCommitSha если он есть
-      const filteredCommits = sinceCommitSha 
-        ? commits.filter((commit: any) => commit.sha !== sinceCommitSha)
-        : commits;
-
-      // Для активности берем только последние 5 коммитов с деталями
-      const recentCommitsForActivity = filteredCommits.slice(0, 5);
-      const detailedCommits = await Promise.all(
-        recentCommitsForActivity.map(async (commit: any) => {
-          try {
-            const detailResponse = await fetch(`${this.baseUrl}/repos/${fullName}/commits/${commit.sha}`, {
-              headers: this.getHeaders()
-            });
-            
-            if (detailResponse.ok) {
-              return await detailResponse.json();
-            }
-            return commit;
-          } catch (error) {
-            console.error(`Error fetching commit details for ${commit.sha}:`, error);
-            return commit;
-          }
-        })
-      );
-
-      // Возвращаем все коммиты для правильного подсчета статистики
-      return filteredCommits.map((commit, index) => {
-        if (index < 5 && detailedCommits[index]) {
-          return detailedCommits[index];
+        
+        if (params.toString()) {
+          url += '?' + params.toString();
         }
-        return commit;
-      });
+
+        const response = await fetch(url, {
+          headers: this.getHeaders()
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch commits: ${response.status}`);
+        }
+
+        const commits = await response.json();
+        
+        // Фильтруем коммиты, исключая sinceCommitSha если он есть
+        const filteredCommits = commits.filter((commit: any) => commit.sha !== sinceCommitSha);
+        return filteredCommits;
+      } else {
+        // Если нет предыдущего коммита, берем последние 2000 коммитов для полной статистики
+        let allCommits = [];
+        let page = 1;
+        const maxPages = 20; // 20 страниц по 100 = 2000 коммитов максимум
+        
+        while (page <= maxPages) {
+          const pageUrl = `${this.baseUrl}/repos/${fullName}/commits?per_page=100&page=${page}`;
+          const pageResponse = await fetch(pageUrl, {
+            headers: this.getHeaders()
+          });
+          
+          if (!pageResponse.ok) {
+            break;
+          }
+          
+          const pageCommits = await pageResponse.json();
+          if (!pageCommits || pageCommits.length === 0) {
+            break;
+          }
+          
+          allCommits.push(...pageCommits);
+          
+          // Если получили меньше 100 коммитов, значит это последняя страница
+          if (pageCommits.length < 100) {
+            break;
+          }
+          
+          page++;
+        }
+        
+        return allCommits;
+      }
     } catch (error) {
       console.error(`Error fetching commits for ${fullName}:`, error);
       return [];
