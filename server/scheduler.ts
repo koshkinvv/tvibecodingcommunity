@@ -397,16 +397,31 @@ export class Scheduler {
                 const commitAuthorName = commit.commit?.author?.name;
                 const commitAuthorEmail = commit.commit?.author?.email;
                 
-                // Match by multiple criteria for better accuracy
-                const isUserCommit = commitAuthorName && (
-                  // Match by GitHub username
-                  commitAuthorName.toLowerCase() === user.username.toLowerCase() ||
-                  // Match by Git author name (from user's name field)
-                  (user.name && commitAuthorName.toLowerCase() === user.name.toLowerCase()) ||
-                  // Match by partial name matching for cases like "vladimirkoshki1" vs "koshkinvv" 
-                  commitAuthorName.toLowerCase().includes(user.username.toLowerCase()) ||
-                  user.username.toLowerCase().includes(commitAuthorName.toLowerCase())
-                );
+                // Enhanced matching logic with detailed logging
+                let isUserCommit = false;
+                
+                if (commitAuthorName) {
+                  const authorLower = commitAuthorName.toLowerCase();
+                  const usernameLower = user.username.toLowerCase();
+                  const nameLower = user.name ? user.name.toLowerCase() : '';
+                  
+                  // Check various matching criteria
+                  const exactUsernameMatch = authorLower === usernameLower;
+                  const exactNameMatch = nameLower && authorLower === nameLower;
+                  const authorContainsUsername = authorLower.includes(usernameLower);
+                  const usernameContainsAuthor = usernameLower.includes(authorLower);
+                  
+                  isUserCommit = exactUsernameMatch || exactNameMatch || authorContainsUsername || usernameContainsAuthor;
+                  
+                  // Debug logging for problematic users
+                  if (user.username === 'koshkinvv' && !isUserCommit) {
+                    console.log(`[DEBUG] No match for user ${user.username}: author="${commitAuthorName}", username="${user.username}", name="${user.name}"`);
+                  }
+                  
+                  if (user.username === 'koshkinvv' && isUserCommit) {
+                    console.log(`[DEBUG] MATCHED for user ${user.username}: author="${commitAuthorName}"`);
+                  }
+                }
                 
                 if (isUserCommit) {
                   userCommitCount++;
