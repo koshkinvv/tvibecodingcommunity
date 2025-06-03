@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ProjectFilter } from "@/components/project-filter";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -15,7 +16,8 @@ import {
   User,
   Trash2,
   Activity,
-  AlertCircle
+  AlertCircle,
+  Tag
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -35,6 +37,8 @@ interface Repository {
   status: string;
   description: string | null;
   descriptionGeneratedAt: string | null;
+  tags: string[];
+  analysisData: any;
   createdAt: string;
   user: User;
   comments: Comment[];
@@ -231,11 +235,63 @@ const CommentSection = ({ repository }: { repository: Repository }) => {
 
 export default function ProjectsPage() {
   const { user } = useAuth();
+  const [filters, setFilters] = useState({
+    tags: [] as string[],
+    category: "",
+    complexity: "",
+    search: ""
+  });
 
-  const { data: projects, isLoading, error } = useQuery<Repository[]>({
+  const { data: allProjects, isLoading, error } = useQuery<Repository[]>({
     queryKey: ["/api/projects"],
     enabled: !!user,
   });
+
+  // Применяем фильтры локально
+  const filteredProjects = useMemo(() => {
+    if (!allProjects) return [];
+    
+    return allProjects.filter(project => {
+      // Фильтр по поиску
+      if (filters.search) {
+        const searchLower = filters.search.toLowerCase();
+        const matchesName = project.name.toLowerCase().includes(searchLower);
+        const matchesDescription = project.description?.toLowerCase().includes(searchLower) || false;
+        const matchesAuthor = (project.user.name || project.user.username).toLowerCase().includes(searchLower);
+        
+        if (!matchesName && !matchesDescription && !matchesAuthor) {
+          return false;
+        }
+      }
+      
+      // Фильтр по тегам
+      if (filters.tags.length > 0) {
+        const projectTags = project.tags?.map(tag => tag.toLowerCase()) || [];
+        const hasMatchingTag = filters.tags.some(filterTag => 
+          projectTags.includes(filterTag.toLowerCase())
+        );
+        if (!hasMatchingTag) return false;
+      }
+      
+      // Фильтр по категории
+      if (filters.category) {
+        const analysis = project.analysisData;
+        if (!analysis?.category || !analysis.category.toLowerCase().includes(filters.category.toLowerCase())) {
+          return false;
+        }
+      }
+      
+      // Фильтр по сложности
+      if (filters.complexity) {
+        const analysis = project.analysisData;
+        if (!analysis?.complexity || analysis.complexity !== filters.complexity) {
+          return false;
+        }
+      }
+      
+      return true;
+    });
+  }, [allProjects, filters]);
 
   if (!user) {
     return (
@@ -283,7 +339,7 @@ export default function ProjectsPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-4 sm:p-6">
+    <div className="max-w-7xl mx-auto p-4 sm:p-6">
       <div className="space-y-4 sm:space-y-6">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Проекты сообщества</h1>
@@ -292,7 +348,22 @@ export default function ProjectsPage() {
           </p>
         </div>
 
-        {projects && projects.length === 0 ? (
+        {/* Компонент фильтрации */}
+        <ProjectFilter onFilterChange={setFilters} />
+
+        {/* Статистика результатов */}
+        {allProjects && (
+          <div className="flex items-center justify-between text-sm text-gray-600">
+            <span>
+              Показано {filteredProjects.length} из {allProjects.length} проектов
+            </span>
+            {filters.tags.length > 0 || filters.category || filters.complexity || filters.search ? (
+              <span>Применены фильтры</span>
+            ) : null}
+          </div>
+        )}
+
+        {filteredProjects && filteredProjects.length === 0 ? (
           <Card>
             <CardContent className="p-8 text-center">
               <GitBranch className="h-12 w-12 text-gray-400 mx-auto mb-4" />

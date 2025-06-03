@@ -163,14 +163,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(404).json({ error: "Repository not found" });
         }
         
-        // Используем специализированный анализ для конкретного репозитория
-        const analysis = await projectAnalyzer.analyzeSpecificRepository(user, repository);
+        // Анализируем конкретный репозиторий
+        const analysis = await projectAnalyzer.analyzeRepository(repository, user);
         return res.json(analysis);
       }
 
-      // Общий анализ всех репозиториев пользователя
+      // Анализ всех репозиториев пользователя
       const repositories = await storage.getRepositoriesByUser(userId);
-      const analysis = await projectAnalyzer.analyzeUserProject(user, repositories);
+      const analyses = await Promise.all(
+        repositories.map(repo => projectAnalyzer.analyzeRepository(repo, user))
+      );
+      const analysis = {
+        repositories: analyses,
+        summary: `Анализ ${repositories.length} репозиториев пользователя ${user.username}`
+      };
       
       res.json(analysis);
     } catch (error) {
@@ -1250,7 +1256,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get available tags for filtering
   app.get("/api/projects/tags", auth.isAuthenticated, async (req, res) => {
     try {
-      const availableTags = ProjectAnalyzer.getAvailableTags();
+      const availableTags = (projectAnalyzer.constructor as any).getAvailableTags();
       
       // Get actual tags from database
       const repositories = await storage.getPublicRepositories();
