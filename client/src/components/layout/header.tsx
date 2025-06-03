@@ -124,7 +124,7 @@ export function Header() {
               )}
             </nav>
           </div>
-          <div className="hidden lg:ml-6 lg:flex lg:items-center space-x-2" data-onboarding="profile-menu">
+          <div className="hidden sm:ml-6 sm:flex sm:items-center space-x-2" data-onboarding="profile-menu">
             {/* Secondary Navigation */}
             <nav className="flex items-center space-x-1" role="navigation" aria-label="Вторичная навигация">
               <Link href="/guidelines" className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500" title="Правила и гайдлайны">
