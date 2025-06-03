@@ -34,8 +34,6 @@ export const repositories = pgTable("repositories", {
   summaryGeneratedAt: timestamp("summary_generated_at"), // Когда было создано описание
   description: text("description"), // AI-генерированное описание проекта
   descriptionGeneratedAt: timestamp("description_generated_at"), // Когда было создано описание проекта
-  tags: json("tags").default([]), // Массив тегов для фильтрации
-  analysisData: json("analysis_data"), // Детальные данные анализа проекта
   isPublic: boolean("is_public").notNull().default(true), // Видимость в комьюнити
   createdAt: timestamp("created_at").defaultNow(),
 });

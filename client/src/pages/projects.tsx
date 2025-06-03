@@ -1,11 +1,10 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ProjectFilter } from "@/components/project-filter";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -16,8 +15,7 @@ import {
   User,
   Trash2,
   Activity,
-  AlertCircle,
-  Tag
+  AlertCircle
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -37,8 +35,6 @@ interface Repository {
   status: string;
   description: string | null;
   descriptionGeneratedAt: string | null;
-  tags: string[];
-  analysisData: any;
   createdAt: string;
   user: User;
   comments: Comment[];
@@ -235,63 +231,11 @@ const CommentSection = ({ repository }: { repository: Repository }) => {
 
 export default function ProjectsPage() {
   const { user } = useAuth();
-  const [filters, setFilters] = useState({
-    tags: [] as string[],
-    category: "",
-    complexity: "",
-    search: ""
-  });
 
-  const { data: allProjects, isLoading, error } = useQuery<Repository[]>({
+  const { data: projects, isLoading, error } = useQuery<Repository[]>({
     queryKey: ["/api/projects"],
     enabled: !!user,
   });
-
-  // Применяем фильтры локально
-  const filteredProjects = useMemo(() => {
-    if (!allProjects) return [];
-    
-    return allProjects.filter(project => {
-      // Фильтр по поиску
-      if (filters.search) {
-        const searchLower = filters.search.toLowerCase();
-        const matchesName = project.name.toLowerCase().includes(searchLower);
-        const matchesDescription = project.description?.toLowerCase().includes(searchLower) || false;
-        const matchesAuthor = (project.user.name || project.user.username).toLowerCase().includes(searchLower);
-        
-        if (!matchesName && !matchesDescription && !matchesAuthor) {
-          return false;
-        }
-      }
-      
-      // Фильтр по тегам
-      if (filters.tags.length > 0) {
-        const projectTags = project.tags?.map(tag => tag.toLowerCase()) || [];
-        const hasMatchingTag = filters.tags.some(filterTag => 
-          projectTags.includes(filterTag.toLowerCase())
-        );
-        if (!hasMatchingTag) return false;
-      }
-      
-      // Фильтр по категории
-      if (filters.category) {
-        const analysis = project.analysisData;
-        if (!analysis?.category || !analysis.category.toLowerCase().includes(filters.category.toLowerCase())) {
-          return false;
-        }
-      }
-      
-      // Фильтр по сложности
-      if (filters.complexity) {
-        const analysis = project.analysisData;
-        if (!analysis?.complexity || analysis.complexity !== filters.complexity) {
-          return false;
-        }
-      }
-      
-      return true;
-    });
-  }, [allProjects, filters]);
 
   if (!user) {
     return (
@@ -339,7 +283,7 @@ export default function ProjectsPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-4 sm:p-6">
+    <div className="max-w-6xl mx-auto p-4 sm:p-6">
       <div className="space-y-4 sm:space-y-6">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Проекты сообщества</h1>
@@ -348,39 +292,19 @@ export default function ProjectsPage() {
           </p>
         </div>
 
-        {/* Компонент фильтрации */}
-        <ProjectFilter onFilterChange={setFilters} />
-
-        {/* Статистика результатов */}
-        {allProjects && (
-          <div className="flex items-center justify-between text-sm text-gray-600">
-            <span>
-              Показано {filteredProjects.length} из {allProjects.length} проектов
-            </span>
-            {filters.tags.length > 0 || filters.category || filters.complexity || filters.search ? (
-              <span>Применены фильтры</span>
-            ) : null}
-          </div>
-        )}
-
-        {filteredProjects && filteredProjects.length === 0 ? (
+        {projects && projects.length === 0 ? (
           <Card>
             <CardContent className="p-8 text-center">
               <GitBranch className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                {allProjects && allProjects.length > 0 ? "Нет проектов по выбранным фильтрам" : "Пока нет проектов"}
-              </h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Пока нет проектов</h3>
               <p className="text-gray-600">
-                {allProjects && allProjects.length > 0 
-                  ? "Попробуйте изменить критерии фильтрации"
-                  : "Добавьте свой первый репозиторий, чтобы поделиться проектом с сообществом"
-                }
+                Добавьте свой первый репозиторий, чтобы поделиться проектом с сообществом
               </p>
             </CardContent>
           </Card>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {filteredProjects?.map((project: Repository) => (
+            {projects?.map((project) => (
               <Card key={project.id} className="h-fit">
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
@@ -414,46 +338,6 @@ export default function ProjectsPage() {
                           Описание создано AI
                         </p>
                       )}
-                    </div>
-                  )}
-
-                  {/* Project tags */}
-                  {project.tags && project.tags.length > 0 && (
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <Tag className="h-4 w-4 text-gray-500" />
-                        <span className="text-sm font-medium text-gray-700">Теги</span>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {project.tags.map((tag, index) => (
-                          <Badge key={index} variant="secondary" className="text-xs">
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Analysis data - complexity and category */}
-                  {project.analysisData && (
-                    <div className="space-y-2">
-                      <div className="flex flex-wrap gap-4 text-xs text-gray-600">
-                        {project.analysisData.category && (
-                          <span className="flex items-center gap-1">
-                            <span className="font-medium">Категория:</span>
-                            {project.analysisData.category}
-                          </span>
-                        )}
-                        {project.analysisData.complexity && (
-                          <span className="flex items-center gap-1">
-                            <span className="font-medium">Сложность:</span>
-                            {project.analysisData.complexity === 'beginner' ? 'Начинающий' :
-                             project.analysisData.complexity === 'intermediate' ? 'Средний' :
-                             project.analysisData.complexity === 'advanced' ? 'Продвинутый' :
-                             project.analysisData.complexity}
-                          </span>
-                        )}
-                      </div>
                     </div>
                   )}
 
