@@ -395,9 +395,18 @@ export class Scheduler {
               if (commit.commit?.author?.date) {
                 // GitHub API structure: commit.author is null but commit.commit.author has the info
                 const commitAuthorName = commit.commit?.author?.name;
+                const commitAuthorEmail = commit.commit?.author?.email;
                 
-                // Match by author name (GitHub username)
-                const isUserCommit = commitAuthorName && commitAuthorName.toLowerCase() === user.username.toLowerCase();
+                // Match by multiple criteria for better accuracy
+                const isUserCommit = commitAuthorName && (
+                  // Match by GitHub username
+                  commitAuthorName.toLowerCase() === user.username.toLowerCase() ||
+                  // Match by Git author name (from user's name field)
+                  (user.name && commitAuthorName.toLowerCase() === user.name.toLowerCase()) ||
+                  // Match by partial name matching for cases like "vladimirkoshki1" vs "koshkinvv" 
+                  commitAuthorName.toLowerCase().includes(user.username.toLowerCase()) ||
+                  user.username.toLowerCase().includes(commitAuthorName.toLowerCase())
+                );
                 
                 if (isUserCommit) {
                   userCommitCount++;
