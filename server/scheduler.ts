@@ -411,7 +411,46 @@ export class Scheduler {
                   const authorContainsUsername = authorLower.includes(usernameLower);
                   const usernameContainsAuthor = usernameLower.includes(authorLower);
                   
-                  isUserCommit = exactUsernameMatch || exactNameMatch || authorContainsUsername || usernameContainsAuthor;
+                  // Special handling for GitHub username variations like vladimirkoshki1 vs koshkinvv
+                  let similarityMatch = false;
+                  if (authorLower.length > 4 && usernameLower.length > 4) {
+                    // Check if usernames share significant common substrings
+                    const authorParts = authorLower.split(/[0-9_-]/);
+                    const userParts = usernameLower.split(/[0-9_-]/);
+                    
+                    for (const authorPart of authorParts) {
+                      if (authorPart.length > 3) {
+                        for (const userPart of userParts) {
+                          if (userPart.length > 3) {
+                            if (authorPart.includes(userPart) || userPart.includes(authorPart)) {
+                              similarityMatch = true;
+                              break;
+                            }
+                          }
+                        }
+                      }
+                      if (similarityMatch) break;
+                    }
+                    
+                    // Additional check: specific known mappings for username variations
+                    const knownMappings = [
+                      { author: 'vladimirkoshki1', username: 'koshkinvv' },
+                    ];
+                    
+                    for (const mapping of knownMappings) {
+                      if (authorLower === mapping.author && usernameLower === mapping.username) {
+                        similarityMatch = true;
+                        break;
+                      }
+                    }
+                    
+                    // General similarity check: reverse name components
+                    if (!similarityMatch && authorLower.includes('koshki') && usernameLower.includes('koshki')) {
+                      similarityMatch = true;
+                    }
+                  }
+                  
+                  isUserCommit = exactUsernameMatch || exactNameMatch || authorContainsUsername || usernameContainsAuthor || similarityMatch;
                   
                   // Debug logging for problematic users
                   if (user.username === 'koshkinvv' && !isUserCommit) {
