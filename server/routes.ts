@@ -1020,12 +1020,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 commits.forEach(commit => {
                   if (commit.commit?.author?.date) {
                     // Check if this commit is by the user who owns the repository
-                    const commitAuthor = commit.author?.login || commit.commit?.author?.name;
                     const commitAuthorGithubId = commit.author?.id?.toString();
                     
-                    // Match by GitHub username or GitHub ID
-                    const isUserCommit = (commitAuthor && commitAuthor.toLowerCase() === user.username.toLowerCase()) ||
-                                       (commitAuthorGithubId && commitAuthorGithubId === user.githubId);
+                    // Match by GitHub ID (most reliable)
+                    const isUserCommit = commitAuthorGithubId && commitAuthorGithubId === user.githubId;
                     
                     if (isUserCommit) {
                       userCommitCount++;
