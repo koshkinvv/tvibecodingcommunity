@@ -16,6 +16,7 @@ import AdminPage from "@/pages/admin";
 import ProjectInsightsPage from "@/pages/project-insights";
 import ProjectsPage from "@/pages/projects";
 import ProgressPage from "@/pages/progress";
+import RecommendationsPage from "@/pages/recommendations";
 import CommunityGuidelinesPage from "@/pages/community-guidelines";
 import PrivacyPolicyPage from "@/pages/privacy-policy";
 import { useAuth } from "@/hooks/use-auth";
@@ -50,6 +51,9 @@ function Router() {
       </Route>
       <Route path="/activity" component={ActivityPage} />
       <Route path="/progress" component={ProgressPage} />
+      <Route path="/recommendations">
+        {user ? <RecommendationsPage /> : <LoginPage />}
+      </Route>
       <Route path="/admin">
         {user?.isAdmin ? <AdminPage /> : <NotFound />}
       </Route>
