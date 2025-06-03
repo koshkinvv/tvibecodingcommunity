@@ -18,8 +18,8 @@ interface ProjectFilterProps {
 
 export function ProjectFilter({ onFilterChange }: ProjectFilterProps) {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>("");
-  const [selectedComplexity, setSelectedComplexity] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedComplexity, setSelectedComplexity] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState<string>("");
 
   // Получение доступных тегов
@@ -36,8 +36,8 @@ export function ProjectFilter({ onFilterChange }: ProjectFilterProps) {
   useEffect(() => {
     onFilterChange({
       tags: selectedTags,
-      category: selectedCategory,
-      complexity: selectedComplexity,
+      category: selectedCategory === "all" ? "" : selectedCategory,
+      complexity: selectedComplexity === "all" ? "" : selectedComplexity,
       search: searchTerm
     });
   }, [selectedTags, selectedCategory, selectedComplexity, searchTerm, onFilterChange]);
@@ -54,8 +54,8 @@ export function ProjectFilter({ onFilterChange }: ProjectFilterProps) {
 
   const clearAllFilters = () => {
     setSelectedTags([]);
-    setSelectedCategory("");
-    setSelectedComplexity("");
+    setSelectedCategory("all");
+    setSelectedComplexity("all");
     setSearchTerm("");
   };
 
@@ -96,7 +96,7 @@ export function ProjectFilter({ onFilterChange }: ProjectFilterProps) {
             <SelectValue placeholder="Выберите категорию" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Все категории</SelectItem>
+            <SelectItem value="all">Все категории</SelectItem>
             <SelectItem value="веб-разработка">Веб-разработка</SelectItem>
             <SelectItem value="мобильные приложения">Мобильные приложения</SelectItem>
             <SelectItem value="игры">Игры</SelectItem>
@@ -115,7 +115,7 @@ export function ProjectFilter({ onFilterChange }: ProjectFilterProps) {
             <SelectValue placeholder="Выберите уровень" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Любой уровень</SelectItem>
+            <SelectItem value="all">Любой уровень</SelectItem>
             <SelectItem value="beginner">Начинающий</SelectItem>
             <SelectItem value="intermediate">Средний</SelectItem>
             <SelectItem value="advanced">Продвинутый</SelectItem>
