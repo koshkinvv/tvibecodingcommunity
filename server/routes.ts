@@ -363,8 +363,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Generate AI analysis for the project
         let description = null;
         let descriptionGeneratedAt = null;
-        let tags = [];
-        let analysisData = null;
+        let tags: string[] = [];
+        let analysisData: any = null;
         
         try {
           const analysis = await projectAnalyzer.analyzeRepository(repository, user);
@@ -1210,11 +1210,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Public projects page - requires authentication to view
   app.get("/api/projects", auth.isAuthenticated, async (req, res) => {
     try {
+      const { tags, category, complexity } = req.query;
       const projects = await storage.getPublicRepositories();
-      res.json(projects);
+      
+      // Apply filters if provided
+      let filteredProjects = projects;
+      
+      if (tags && typeof tags === 'string') {
+        const filterTags = tags.split(',').map(tag => tag.trim().toLowerCase());
+        filteredProjects = filteredProjects.filter(project => {
+          const projectTags = Array.isArray(project.tags) ? project.tags.map(tag => tag.toLowerCase()) : [];
+          return filterTags.some(filterTag => projectTags.includes(filterTag));
+        });
+      }
+      
+      if (category && typeof category === 'string') {
+        filteredProjects = filteredProjects.filter(project => {
+          if (!project.analysisData || typeof project.analysisData !== 'object') return false;
+          const analysis = project.analysisData as any;
+          return analysis.category && analysis.category.toLowerCase().includes(category.toLowerCase());
+        });
+      }
+      
+      if (complexity && typeof complexity === 'string') {
+        filteredProjects = filteredProjects.filter(project => {
+          if (!project.analysisData || typeof project.analysisData !== 'object') return false;
+          const analysis = project.analysisData as any;
+          return analysis.complexity === complexity;
+        });
+      }
+      
+      res.json(filteredProjects);
     } catch (error) {
       console.error("Error fetching public projects:", error);
       res.status(500).json({ error: "Failed to fetch projects" });
+    }
+  });
+
+  // Get available tags for filtering
+  app.get("/api/projects/tags", auth.isAuthenticated, async (req, res) => {
+    try {
+      const availableTags = ProjectAnalyzer.getAvailableTags();
+      
+      // Get actual tags from database
+      const repositories = await storage.getPublicRepositories();
+      const usedTags = new Set<string>();
+      
+      repositories.forEach(repo => {
+        if (Array.isArray(repo.tags)) {
+          repo.tags.forEach(tag => usedTags.add(tag));
+        }
+      });
+      
+      res.json({
+        availableTags,
+        usedTags: Array.from(usedTags).sort()
+      });
+    } catch (error) {
+      console.error("Error fetching tags:", error);
+      res.status(500).json({ error: "Failed to fetch tags" });
     }
   });
 
