@@ -49,7 +49,7 @@ export function Header() {
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link href="/" className="flex-shrink-0 flex items-center">
-              <span className="text-2xl font-bold text-primary">vibe<span className="text-gray-700">coding</span></span>
+              <span className="text-2xl font-bold text-primary">TVibe<span className="text-gray-700">coding</span></span>
             </Link>
             <nav className="hidden sm:ml-10 sm:flex space-x-8" data-onboarding="navigation">
               <NavLink href="/">Home</NavLink>
