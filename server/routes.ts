@@ -702,6 +702,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Get public projects with comments - requires authentication
+  app.get("/api/projects", auth.isAuthenticated, async (req, res) => {
+    try {
+      const projects = await storage.getPublicRepositories();
+      res.json(projects);
+    } catch (error) {
+      console.error("Error fetching public projects:", error);
+      res.status(500).json({ error: "Failed to fetch projects" });
+    }
+  });
+
   // Admin endpoints
   app.get("/api/admin/users", auth.isAdmin, async (req, res) => {
     try {

@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, X, HelpCircle, Home, Activity, TrendingUp, Users, Settings, User, LogOut, Github, BookOpen, Target, BarChart3 } from 'lucide-react';
+import { Menu, X, HelpCircle, Home, Activity, TrendingUp, Users, Settings, User, LogOut, Github, BookOpen, Target, BarChart3, GitBranch } from 'lucide-react';
 
 export function Header() {
   const [location] = useLocation();
@@ -107,6 +107,7 @@ export function Header() {
                   <div className="h-6 w-px bg-gray-300 mx-2" role="separator" />
                   <NavLink href="/progress" icon={BarChart3}>Прогресс</NavLink>
                   <NavLink href="/activity" icon={Activity}>Активность</NavLink>
+                  <NavLink href="/projects" icon={GitBranch}>Проекты</NavLink>
                   <NavLink href="/community" icon={Users}>Сообщество</NavLink>
                   
                   <div className="h-6 w-px bg-gray-300 mx-2" role="separator" />
@@ -257,6 +258,7 @@ export function Header() {
               <div className="px-4 py-2">
                 <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Сообщество</h3>
               </div>
+              <MobileNavLink href="/projects" icon={GitBranch}>Проекты</MobileNavLink>
               <MobileNavLink href="/community" icon={Users}>Участники</MobileNavLink>
             </div>
           </>
