@@ -118,48 +118,77 @@ export class Scheduler {
                   
                   console.log(`Generated summary for ${repo.fullName}: ${changesSummary}`);
                   
-                  // Create activity feed entry for both new and updated repositories
-                  if (newCommits.length > 0) {
-                    // Create a single activity feed entry for the batch of commits
-                    const latestCommit = newCommits[0]; // Most recent commit
-                    const totalFilesChanged = newCommits.reduce((sum, commit) => sum + (commit.files?.length || 0), 0);
-                    const totalLinesAdded = newCommits.reduce((sum, commit) => sum + (commit.stats?.additions || 0), 0);
-                    const totalLinesDeleted = newCommits.reduce((sum, commit) => sum + (commit.stats?.deletions || 0), 0);
-                    
-                    // Prepare commit details for storage
-                    const commitDetails = newCommits.map(commit => ({
-                      sha: commit.sha,
-                      message: commit.commit.message,
-                      author: commit.commit.author.name,
-                      date: commit.commit.author.date,
-                      filesChanged: commit.files?.length || 0,
-                      linesAdded: commit.stats?.additions || 0,
-                      linesDeleted: commit.stats?.deletions || 0,
-                    }));
-                    
-                    await storage.createActivityFeedEntry({
-                      userId: repo.userId,
-                      repositoryId: repo.id,
-                      commitSha: latestCommit.sha,
-                      commitMessage: newCommits.length === 1 ? latestCommit.commit.message : `${newCommits.length} новых коммитов`,
-                      commitCount: newCommits.length,
-                      commits: commitDetails,
-                      filesChanged: totalFilesChanged,
-                      linesAdded: totalLinesAdded,
-                      linesDeleted: totalLinesDeleted,
-                      aiSummary: changesSummary,
-                      commitDate: new Date(latestCommit.commit.author.date),
-                    });
-                    
-                    console.log(`Created activity feed entry for ${repo.fullName} with ${newCommits.length} commits`);
-                  } else {
-                    console.log(`Skipping activity feed for initial check of ${repo.fullName}`);
-                  }
+                  // Create activity feed entry for new commits
+                  const latestCommit = newCommits[0]; // Most recent commit
+                  const totalFilesChanged = newCommits.reduce((sum, commit) => sum + (commit.files?.length || 0), 0);
+                  const totalLinesAdded = newCommits.reduce((sum, commit) => sum + (commit.stats?.additions || 0), 0);
+                  const totalLinesDeleted = newCommits.reduce((sum, commit) => sum + (commit.stats?.deletions || 0), 0);
+                  
+                  // Prepare commit details for storage
+                  const commitDetails = newCommits.map(commit => ({
+                    sha: commit.sha,
+                    message: commit.commit.message,
+                    author: commit.commit.author.name,
+                    date: commit.commit.author.date,
+                    filesChanged: commit.files?.length || 0,
+                    linesAdded: commit.stats?.additions || 0,
+                    linesDeleted: commit.stats?.deletions || 0,
+                  }));
+                  
+                  await storage.createActivityFeedEntry({
+                    userId: repo.userId,
+                    repositoryId: repo.id,
+                    commitSha: latestCommit.sha,
+                    commitMessage: newCommits.length === 1 ? latestCommit.commit.message : `${newCommits.length} новых коммитов`,
+                    commitCount: newCommits.length,
+                    commits: commitDetails,
+                    filesChanged: totalFilesChanged,
+                    linesAdded: totalLinesAdded,
+                    linesDeleted: totalLinesDeleted,
+                    aiSummary: changesSummary,
+                    commitDate: new Date(latestCommit.commit.author.date),
+                  });
+                  
+                  console.log(`Created activity feed entry for ${repo.fullName} with ${newCommits.length} commits`);
                 }
               } catch (error) {
                 console.error(`Error generating summary for ${repo.fullName}:`, error);
                 changesSummary = "Не удалось проанализировать изменения";
                 summaryGeneratedAt = new Date();
+              }
+            }
+            
+            // Check if user has any activity feed entries, create initial one if needed
+            const existingActivityCount = await storage.getActivityFeedByUser(repo.userId, 1);
+            if (existingActivityCount.length === 0 && latestCommit && repo.changesSummary) {
+              try {
+                console.log(`Creating initial activity feed for repository ${repo.fullName} (user has no activity feed)`);
+                
+                await storage.createActivityFeedEntry({
+                  userId: repo.userId,
+                  repositoryId: repo.id,
+                  commitSha: newCommitSha,
+                  commitMessage: latestCommit.commit.message,
+                  commitCount: 1,
+                  commits: [{
+                    sha: newCommitSha,
+                    message: latestCommit.commit.message,
+                    author: latestCommit.commit.author.name,
+                    date: latestCommit.commit.author.date,
+                    filesChanged: 0,
+                    linesAdded: 0,
+                    linesDeleted: 0,
+                  }],
+                  filesChanged: 0,
+                  linesAdded: 0,
+                  linesDeleted: 0,
+                  aiSummary: repo.changesSummary || "Активность в репозитории",
+                  commitDate: lastCommitDate,
+                });
+                
+                console.log(`Created initial activity feed entry for ${repo.fullName}`);
+              } catch (error) {
+                console.error(`Error creating initial activity feed for ${repo.fullName}:`, error);
               }
             }
             
