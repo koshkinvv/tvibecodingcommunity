@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
+import { ProjectsDropdown } from '@/components/ui/navigation-dropdown';
 import { Menu, X, HelpCircle, Home, Activity, TrendingUp, Users, Settings, User, LogOut, Github, BookOpen, Target, BarChart3, GitBranch } from 'lucide-react';
 
 export function Header() {
@@ -107,8 +108,9 @@ export function Header() {
                   <div className="h-6 w-px bg-gray-300 mx-2" role="separator" />
                   <NavLink href="/progress" icon={BarChart3}>Прогресс</NavLink>
                   <NavLink href="/activity" icon={Activity}>Активность</NavLink>
-                  <NavLink href="/insights" icon={Target}>Аналитика</NavLink>
-                  <NavLink href="/projects" icon={GitBranch}>Проекты</NavLink>
+                  
+                  <ProjectsDropdown />
+                  
                   <NavLink href="/community" icon={Users}>Сообщество</NavLink>
                   
                   <div className="h-6 w-px bg-gray-300 mx-2" role="separator" />
