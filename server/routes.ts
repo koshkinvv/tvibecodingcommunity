@@ -1600,7 +1600,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     // Serve debug test page
     app.get('/debug', (req, res) => {
-      res.sendFile(require('path').join(process.cwd(), 'debug-test.html'));
+      const path = require('path');
+      res.sendFile(path.join(process.cwd(), 'debug-test.html'));
     });
   }
   
