@@ -25,7 +25,7 @@ export default function HomePage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="md:flex md:items-center md:justify-between">
           <div className="flex-1 min-w-0">
-            <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">Welcome to Vibe Coding</h2>
+            <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">Добро пожаловать в Vibe Coding</h2>
           </div>
         </div>
 
@@ -38,7 +38,7 @@ export default function HomePage() {
                 <CardContent className="px-4 py-5 sm:p-6">
                   <dl>
                     <dt className="text-sm font-medium text-gray-500 truncate">
-                      Active Members
+                      Активных участников
                     </dt>
                     <dd className="mt-1 text-3xl font-semibold text-gray-900">
                       {statsLoading ? (

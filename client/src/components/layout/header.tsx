@@ -52,15 +52,15 @@ export function Header() {
               <span className="text-2xl font-bold text-[#ffdd00]">TVibe<span className="text-gray-700">coding</span></span>
             </Link>
             <nav className="hidden sm:ml-10 sm:flex space-x-8" data-onboarding="navigation">
-              <NavLink href="/">Home</NavLink>
-              <NavLink href="/guidelines">Guidelines</NavLink>
-              {user && <NavLink href="/activity">Activity</NavLink>}
-              {user && <NavLink href="/insights">Insights</NavLink>}
-              {user && <NavLink href="/progress">Progress</NavLink>}
-              {user && <NavLink href="/profile">Profile</NavLink>}
-              {user && <NavLink href="/community">Community</NavLink>}
-              {user && <NavLink href="/projects">Projects</NavLink>}
-              {user?.isAdmin && <NavLink href="/admin">Admin</NavLink>}
+              <NavLink href="/">Главная</NavLink>
+              <NavLink href="/guidelines">Правила</NavLink>
+              {user && <NavLink href="/activity">Активность</NavLink>}
+              {user && <NavLink href="/insights">Аналитика</NavLink>}
+              {user && <NavLink href="/progress">Прогресс</NavLink>}
+              {user && <NavLink href="/profile">Профиль</NavLink>}
+              {user && <NavLink href="/community">Сообщество</NavLink>}
+              {user && <NavLink href="/projects">Проекты</NavLink>}
+              {user?.isAdmin && <NavLink href="/admin">Админ</NavLink>}
             </nav>
           </div>
           <div className="hidden sm:ml-6 sm:flex sm:items-center space-x-3" data-onboarding="profile-menu">
@@ -98,18 +98,18 @@ export function Header() {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
                     <Link href="/profile" className="w-full">
-                      Your Profile
+                      Ваш профиль
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={logout}>
-                    Sign out
+                    Выйти
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
               <Link href="/login">
                 <Button>
-                  Sign in with GitHub
+                  Войти через GitHub
                 </Button>
               </Link>
             )}
@@ -130,14 +130,14 @@ export function Header() {
       {/* Mobile menu */}
       <div className={`sm:hidden ${mobileMenuOpen ? '' : 'hidden'}`} id="mobile-menu">
         <div className="pt-2 pb-3 space-y-1">
-          <MobileNavLink href="/">Home</MobileNavLink>
-          <MobileNavLink href="/guidelines">Guidelines</MobileNavLink>
-          {user && <MobileNavLink href="/activity">Activity</MobileNavLink>}
-          {user && <MobileNavLink href="/insights">Insights</MobileNavLink>}
-          {user && <MobileNavLink href="/profile">Profile</MobileNavLink>}
-          {user && <MobileNavLink href="/community">Community</MobileNavLink>}
-          {user && <MobileNavLink href="/projects">Projects</MobileNavLink>}
-          {user?.isAdmin && <MobileNavLink href="/admin">Admin</MobileNavLink>}
+          <MobileNavLink href="/">Главная</MobileNavLink>
+          <MobileNavLink href="/guidelines">Правила</MobileNavLink>
+          {user && <MobileNavLink href="/activity">Активность</MobileNavLink>}
+          {user && <MobileNavLink href="/insights">Аналитика</MobileNavLink>}
+          {user && <MobileNavLink href="/profile">Профиль</MobileNavLink>}
+          {user && <MobileNavLink href="/community">Сообщество</MobileNavLink>}
+          {user && <MobileNavLink href="/projects">Проекты</MobileNavLink>}
+          {user?.isAdmin && <MobileNavLink href="/admin">Админ</MobileNavLink>}
         </div>
         {user ? (
           <div className="pt-4 pb-3 border-t border-gray-200">
@@ -156,13 +156,13 @@ export function Header() {
             </div>
             <div className="mt-3 space-y-1">
               <Link href="/profile" className="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100">
-                Your Profile
+                Ваш профиль
               </Link>
               <button
                 onClick={logout}
                 className="block w-full text-left px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100"
               >
-                Sign out
+                Выйти
               </button>
             </div>
           </div>
@@ -170,7 +170,7 @@ export function Header() {
           <div className="pt-4 pb-3 border-t border-gray-200">
             <div className="px-4">
               <Link href="/login" className="block text-center px-4 py-2 rounded-md text-base font-medium text-white bg-primary hover:bg-primary-700">
-                Sign in with GitHub
+                Войти через GitHub
               </Link>
             </div>
           </div>
