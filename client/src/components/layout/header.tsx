@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, HelpCircle, Home, Activity, TrendingUp, Users, Settings, User, LogOut, Github, BookOpen, Target, BarChart3 } from 'lucide-react';
+import { Menu, X, HelpCircle, Home, Activity, TrendingUp, Users, Settings, User, LogOut, Github, BookOpen, Target, BarChart3 } from 'lucide-react';
 
 export function Header() {
   const [location] = useLocation();
@@ -226,30 +226,70 @@ export function Header() {
         </div>
       </div>
       {/* Mobile menu */}
-      <div className={`sm:hidden ${mobileMenuOpen ? '' : 'hidden'}`} id="mobile-menu">
-        <div className="pt-2 pb-3 space-y-1 bg-gray-50">
-          {/* Основные разделы */}
+      <div 
+        className={`lg:hidden border-b border-gray-200 bg-white ${mobileMenuOpen ? 'block' : 'hidden'}`} 
+        id="mobile-menu"
+        role="navigation"
+        aria-label="Мобильная навигация"
+      >
+        {/* Primary Navigation Section */}
+        <div className="py-3">
+          <div className="px-4 py-2">
+            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Основное</h3>
+          </div>
           <MobileNavLink href="/" icon={Home}>Главная</MobileNavLink>
-          {user && (
-            <>
-              {/* Личные данные и активность */}
-              <MobileNavLink href="/progress" icon={TrendingUp}>Мой прогресс</MobileNavLink>
-              <MobileNavLink href="/activity" icon={Activity}>Активность</MobileNavLink>
-              
-              {/* Сообщество */}
-              <MobileNavLink href="/community" icon={Users}>Сообщество</MobileNavLink>
-              
-              {/* Настройки и профиль */}
-              <MobileNavLink href="/profile" icon={User}>Профиль</MobileNavLink>
-            </>
-          )}
-          
-          {/* Справочная информация */}
-          <MobileNavLink href="/guidelines" icon={BookOpen}>Правила</MobileNavLink>
-          
-          {/* Административные функции */}
-          {user?.isAdmin && <MobileNavLink href="/admin" icon={Settings}>Админ</MobileNavLink>}
         </div>
+        
+        {user && (
+          <>
+            {/* User Section */}
+            <div className="border-t border-gray-100 py-3">
+              <div className="px-4 py-2">
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Личное</h3>
+              </div>
+              <MobileNavLink href="/progress" icon={BarChart3}>Мой прогресс</MobileNavLink>
+              <MobileNavLink href="/activity" icon={Activity}>Активность</MobileNavLink>
+              <MobileNavLink href="/profile" icon={User}>Профиль</MobileNavLink>
+            </div>
+            
+            {/* Community Section */}
+            <div className="border-t border-gray-100 py-3">
+              <div className="px-4 py-2">
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Сообщество</h3>
+              </div>
+              <MobileNavLink href="/community" icon={Users}>Участники</MobileNavLink>
+            </div>
+          </>
+        )}
+        
+        {/* Help & Resources Section */}
+        <div className="border-t border-gray-100 py-3">
+          <div className="px-4 py-2">
+            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Справка</h3>
+          </div>
+          <MobileNavLink href="/guidelines" icon={BookOpen}>Правила</MobileNavLink>
+          <button
+            onClick={() => {
+              resetOnboarding();
+              setTimeout(startOnboarding, 100);
+              setMobileMenuOpen(false);
+            }}
+            className="relative flex items-center gap-3 pl-4 pr-4 py-4 border-l-4 border-transparent text-base font-medium text-gray-700 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset min-h-[56px] w-full text-left"
+          >
+            <HelpCircle className="h-6 w-6 flex-shrink-0" />
+            <span className="flex-1">Помощь</span>
+          </button>
+        </div>
+        
+        {/* Admin Section */}
+        {user?.isAdmin && (
+          <div className="border-t border-gray-100 py-3">
+            <div className="px-4 py-2">
+              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Администрирование</h3>
+            </div>
+            <MobileNavLink href="/admin" icon={Settings}>Админ-панель</MobileNavLink>
+          </div>
+        )}
         {user ? (
           <div className="pt-4 pb-3 border-t border-gray-200">
             <div className="flex items-center px-4">
