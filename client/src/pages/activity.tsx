@@ -117,14 +117,14 @@ function ActivityCard({ activity }: { activity: ActivityItem }) {
                       {isExpanded ? (
                         <>
                           <ChevronDown className="h-3 w-3 mr-1" />
-                          <span className="hidden sm:inline">Hide commits</span>
-                          <span className="sm:hidden">Hide</span>
+                          <span className="hidden sm:inline">Скрыть коммиты</span>
+                          <span className="sm:hidden">Скрыть</span>
                         </>
                       ) : (
                         <>
                           <ChevronRight className="h-3 w-3 mr-1" />
-                          <span className="hidden sm:inline">Show {activity.commitCount} commits</span>
-                          <span className="sm:hidden">{activity.commitCount} commits</span>
+                          <span className="hidden sm:inline">Показать {activity.commitCount} коммитов</span>
+                          <span className="sm:hidden">{activity.commitCount} коммитов</span>
                         </>
                       )}
                     </Button>
@@ -209,10 +209,10 @@ export default function ActivityPage() {
       <div className="max-w-4xl mx-auto p-4 sm:p-6">
         <Card>
           <CardContent className="p-6 text-center">
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Authentication Required</h2>
-            <p className="text-gray-600 mb-4">Please log in to view community activity.</p>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Требуется авторизация</h2>
+            <p className="text-gray-600 mb-4">Войдите в систему, чтобы просматривать активность сообщества.</p>
             <Button asChild>
-              <a href="/api/auth/github">Login with GitHub</a>
+              <a href="/api/auth/github">Войти через GitHub</a>
             </Button>
           </CardContent>
         </Card>
@@ -225,7 +225,7 @@ export default function ActivityPage() {
     return (
       <div className="max-w-4xl mx-auto p-4 sm:p-6">
         <div className="space-y-4 sm:space-y-6">
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Community Activity</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Активность сообщества</h1>
           <div className="space-y-4">
             {Array(5).fill(0).map((_, i) => (
               <Card key={i}>
@@ -266,7 +266,7 @@ export default function ActivityPage() {
     return (
       <div className="max-w-4xl mx-auto p-6">
         <div className="space-y-6">
-          <h1 className="text-2xl font-bold text-gray-900">Community Activity</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Активность сообщества</h1>
           <div className="text-center py-10">
             <GitCommit className="mx-auto h-12 w-12 text-gray-400" />
             <p className="mt-2 text-gray-500">Пока нет активности в сообществе</p>
@@ -280,8 +280,8 @@ export default function ActivityPage() {
     <div className="max-w-4xl mx-auto p-6">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900">Community Activity</h1>
-          <p className="text-sm text-gray-500">{activities.length} recent activities</p>
+          <h1 className="text-2xl font-bold text-gray-900">Активность сообщества</h1>
+          <p className="text-sm text-gray-500">{activities.length} недавних активностей</p>
         </div>
 
         <div className="space-y-4">
