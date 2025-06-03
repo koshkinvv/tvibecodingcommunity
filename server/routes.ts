@@ -1014,13 +1014,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Calculate stats from all repositories - only count user's own commits
           for (const repo of repositories) {
             try {
+              console.log(`[ADMIN] Fetching commits for ${repo.fullName} for user ${user.username} (ID: ${user.githubId})`);
               const commits = await githubClient.getCommitsSince(repo.fullName);
+              console.log(`[ADMIN] Found ${commits?.length || 0} commits in ${repo.fullName}`);
+              
               if (commits && commits.length > 0) {
                 let userCommitCount = 0;
-                commits.forEach(commit => {
+                commits.forEach((commit, index) => {
                   if (commit.commit?.author?.date) {
                     // Check if this commit is by the user who owns the repository
                     const commitAuthorGithubId = commit.author?.id?.toString();
+                    const commitAuthor = commit.author?.login;
+                    
+                    if (index < 3) { // Debug first 3 commits
+                      console.log(`[ADMIN] Commit ${index}: author=${commitAuthor}, authorId=${commitAuthorGithubId}, looking for userId=${user.githubId}`);
+                    }
                     
                     // Match by GitHub ID (most reliable)
                     const isUserCommit = commitAuthorGithubId && commitAuthorGithubId === user.githubId;
@@ -1033,6 +1041,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     }
                   }
                 });
+                console.log(`[ADMIN] User commits found in ${repo.fullName}: ${userCommitCount}`);
                 totalCommits += userCommitCount;
               }
             } catch (error) {
