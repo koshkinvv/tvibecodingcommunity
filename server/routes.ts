@@ -984,6 +984,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Test endpoint для проверки Telegram бота
+  app.post("/api/telegram/test", async (req, res) => {
+    try {
+      if (!telegramBot) {
+        return res.status(503).json({ error: "Telegram bot not configured" });
+      }
+
+      const { chatId, message } = req.body;
+      if (!chatId || !message) {
+        return res.status(400).json({ error: "chatId and message are required" });
+      }
+
+      const success = await telegramBot.sendMessage(chatId.toString(), message);
+      res.json({ success, sent: success });
+    } catch (error) {
+      console.error("Error testing Telegram bot:", error);
+      res.status(500).json({ error: "Failed to test bot" });
+    }
+  });
+
   // Admin endpoints
   app.get("/api/admin/users", auth.isAdmin, async (req, res) => {
     try {
