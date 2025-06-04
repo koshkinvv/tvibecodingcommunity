@@ -257,7 +257,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           avatarUrl: user.avatarUrl,
           notificationPreference: user.notificationPreference,
           onVacation: user.onVacation,
-          vacationUntil: user.vacationUntil
+          vacationUntil: user.vacationUntil,
+          telegramId: user.telegramId,
+          telegramUsername: user.telegramUsername,
+          telegramConnected: user.telegramConnected
         },
         repositories
       });

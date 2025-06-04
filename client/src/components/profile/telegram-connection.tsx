@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import { ExternalLink, MessageCircle, Unlink, CheckCircle, AlertCircle } from 'lucide-react';
+import { ExternalLink, MessageCircle, Unlink, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
 import type { User } from '@shared/schema';
 
 interface TelegramConnectionProps {
@@ -18,6 +18,17 @@ export function TelegramConnection({ user }: TelegramConnectionProps) {
   const [telegramUsername, setTelegramUsername] = useState(user.telegramUsername || '');
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Auto-refresh profile data every 10 seconds if username is set but not connected
+  useEffect(() => {
+    if (user.telegramUsername && !user.telegramConnected) {
+      const interval = setInterval(() => {
+        queryClient.invalidateQueries({ queryKey: ['/api/profile'] });
+      }, 10000); // 10 seconds
+
+      return () => clearInterval(interval);
+    }
+  }, [user.telegramUsername, user.telegramConnected, queryClient]);
 
   // Проверяем что пользователь авторизован
   if (!user) {
@@ -96,6 +107,24 @@ export function TelegramConnection({ user }: TelegramConnectionProps) {
 
   const handleDisconnect = () => {
     disconnectMutation.mutate();
+  };
+
+  const refreshMutation = useMutation({
+    mutationFn: async () => {
+      // Just trigger a refresh of profile data
+      await queryClient.invalidateQueries({ queryKey: ['/api/profile'] });
+      return true;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Данные обновлены",
+        description: "Статус подключения проверен"
+      });
+    }
+  });
+
+  const handleRefresh = () => {
+    refreshMutation.mutate();
   };
 
   const openTelegramBot = () => {
