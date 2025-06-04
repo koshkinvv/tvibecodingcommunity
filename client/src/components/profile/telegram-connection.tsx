@@ -215,9 +215,32 @@ export function TelegramConnection({ user }: TelegramConnectionProps) {
               <Alert className="bg-amber-50 border-amber-200 dark:bg-amber-950 dark:border-amber-800">
                 <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                 <AlertDescription className="text-amber-800 dark:text-amber-200">
-                  <div className="space-y-1">
-                    <p className="font-semibold">Username сохранен, ожидается подтверждение</p>
-                    <p className="text-sm">Перейдите в бот @TVibeCoding_Bot и нажмите /start для завершения подключения</p>
+                  <div className="space-y-3">
+                    <div className="space-y-1">
+                      <p className="font-semibold">Username сохранен, ожидается подтверждение</p>
+                      <p className="text-sm">Перейдите в бот @TVibeCoding_Bot и нажмите /start для завершения подключения</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={openTelegramBot}
+                        className="flex items-center gap-2"
+                      >
+                        <ExternalLink className="w-3 h-3" />
+                        Открыть бот
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={handleRefresh}
+                        disabled={refreshMutation.isPending}
+                        className="flex items-center gap-2"
+                      >
+                        <RefreshCw className={`w-3 h-3 ${refreshMutation.isPending ? 'animate-spin' : ''}`} />
+                        Проверить статус
+                      </Button>
+                    </div>
                   </div>
                 </AlertDescription>
               </Alert>
