@@ -174,6 +174,148 @@ export class GitHubClient {
     }
   }
 
+  async getRepositoryContents(fullName: string, path: string = ''): Promise<any[]> {
+    try {
+      const response = await fetch(`${this.baseUrl}/repos/${fullName}/contents/${path}`, {
+        headers: this.getHeaders()
+      });
+      
+      if (!response.ok) {
+        throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error(`Error fetching contents for ${fullName}/${path}:`, error);
+      throw error;
+    }
+  }
+
+  async getFileContent(fullName: string, filePath: string): Promise<string | null> {
+    try {
+      const response = await fetch(`${this.baseUrl}/repos/${fullName}/contents/${filePath}`, {
+        headers: this.getHeaders()
+      });
+      
+      if (!response.ok) {
+        return null;
+      }
+      
+      const data = await response.json();
+      if (data.type === 'file' && data.content) {
+        // GitHub returns base64 encoded content
+        return Buffer.from(data.content, 'base64').toString('utf-8');
+      }
+      
+      return null;
+    } catch (error) {
+      console.error(`Error fetching file content for ${fullName}/${filePath}:`, error);
+      return null;
+    }
+  }
+
+  async getRepositoryStructure(fullName: string): Promise<{
+    readme: string | null;
+    packageJson: any | null;
+    mainFiles: { path: string; content: string; size: number }[];
+    fileTypes: { [key: string]: number };
+    totalFiles: number;
+  }> {
+    try {
+      const structure = {
+        readme: null as string | null,
+        packageJson: null as any,
+        mainFiles: [] as { path: string; content: string; size: number }[],
+        fileTypes: {} as { [key: string]: number },
+        totalFiles: 0
+      };
+
+      // Get repository root contents
+      const rootContents = await this.getRepositoryContents(fullName);
+      
+      // Find and read important files
+      const importantFiles = ['README.md', 'package.json', 'tsconfig.json', 'vite.config.ts', 'tailwind.config.ts'];
+      
+      for (const item of rootContents) {
+        if (item.type === 'file') {
+          structure.totalFiles++;
+          
+          // Count file types
+          const extension = item.name.split('.').pop()?.toLowerCase() || 'no-ext';
+          structure.fileTypes[extension] = (structure.fileTypes[extension] || 0) + 1;
+          
+          // Get content of important files
+          if (importantFiles.includes(item.name)) {
+            const content = await this.getFileContent(fullName, item.path);
+            if (content) {
+              if (item.name === 'README.md') {
+                structure.readme = content;
+              } else if (item.name === 'package.json') {
+                try {
+                  structure.packageJson = JSON.parse(content);
+                } catch (e) {
+                  console.log('Failed to parse package.json');
+                }
+              }
+              
+              structure.mainFiles.push({
+                path: item.path,
+                content: content.substring(0, 2000), // Limit content length
+                size: item.size
+              });
+            }
+          }
+        }
+      }
+
+      // Scan subdirectories for more files
+      await this.scanDirectory(fullName, rootContents, structure, 1);
+      
+      return structure;
+    } catch (error) {
+      console.error(`Error getting repository structure for ${fullName}:`, error);
+      throw error;
+    }
+  }
+
+  private async scanDirectory(fullName: string, contents: any[], structure: any, depth: number): Promise<void> {
+    if (depth > 2) return; // Limit recursion depth
+
+    for (const item of contents) {
+      if (item.type === 'dir' && !item.name.startsWith('.') && item.name !== 'node_modules') {
+        try {
+          const dirContents = await this.getRepositoryContents(fullName, item.path);
+          
+          for (const subItem of dirContents) {
+            if (subItem.type === 'file') {
+              structure.totalFiles++;
+              
+              const extension = subItem.name.split('.').pop()?.toLowerCase() || 'no-ext';
+              structure.fileTypes[extension] = (structure.fileTypes[extension] || 0) + 1;
+              
+              // Get content of key source files
+              if (['ts', 'tsx', 'js', 'jsx'].includes(extension) && structure.mainFiles.length < 10) {
+                const content = await this.getFileContent(fullName, subItem.path);
+                if (content && content.length > 100) { // Only non-trivial files
+                  structure.mainFiles.push({
+                    path: subItem.path,
+                    content: content.substring(0, 1500),
+                    size: subItem.size
+                  });
+                }
+              }
+            }
+          }
+          
+          // Recurse into subdirectories
+          await this.scanDirectory(fullName, dirContents, structure, depth + 1);
+        } catch (error) {
+          console.log(`Skipping directory ${item.path}: ${error}`);
+        }
+      }
+    }
+  }
+
   // Calculate repository status based on last commit date
   calculateRepositoryStatus(lastCommitDate: Date | null): 'active' | 'warning' | 'inactive' | 'pending' {
     if (!lastCommitDate) return 'pending';

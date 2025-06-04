@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { User, Repository } from "@shared/schema";
+import { githubClient } from "./github";
 
 if (!process.env.GEMINI_API_KEY) {
   throw new Error("GEMINI_API_KEY environment variable is required");
@@ -34,6 +35,35 @@ export class ProjectAnalyzer {
       ? Math.floor((Date.now() - new Date(repository.lastCommitDate).getTime()) / (1000 * 60 * 60 * 24))
       : 999;
 
+    // Получаем реальную структуру и код репозитория
+    console.log(`Получаю структуру репозитория: ${repository.fullName}`);
+    
+    if (!user.githubToken) {
+      throw new Error('GitHub токен не найден. Требуется повторная авторизация.');
+    }
+
+    githubClient.setToken(user.githubToken);
+    
+    let repoStructure;
+    try {
+      repoStructure = await githubClient.getRepositoryStructure(repository.fullName);
+    } catch (error) {
+      console.error('Ошибка получения структуры репозитория:', error);
+      throw new Error('Не удалось получить содержимое репозитория. Проверьте права доступа.');
+    }
+
+    // Анализируем технологический стек
+    const techStack = [];
+    if (repoStructure.packageJson) {
+      const deps = { ...repoStructure.packageJson.dependencies, ...repoStructure.packageJson.devDependencies };
+      if (deps.react) techStack.push('React');
+      if (deps.typescript) techStack.push('TypeScript');
+      if (deps['@types/node']) techStack.push('Node.js');
+      if (deps.tailwindcss) techStack.push('Tailwind CSS');
+      if (deps.express) techStack.push('Express');
+      if (deps.drizzle) techStack.push('Drizzle ORM');
+    }
+
     const projectContext = `
 АНАЛИЗ КОНКРЕТНОГО РЕПОЗИТОРИЯ: ${repository.name}
 
@@ -50,52 +80,84 @@ export class ProjectAnalyzer {
 - Дата создания: ${new Date(repository.createdAt || Date.now()).toLocaleDateString('ru-RU')}
 - Последний коммит: ${repository.lastCommitDate ? new Date(repository.lastCommitDate).toLocaleDateString('ru-RU') : 'Нет данных'}
 
+СТРУКТУРА ПРОЕКТА:
+- Общее количество файлов: ${repoStructure.totalFiles}
+- Типы файлов: ${Object.entries(repoStructure.fileTypes).map(([ext, count]) => `${ext}: ${count}`).join(', ')}
+- Технологический стек: ${techStack.join(', ') || 'Не определен'}
+
+README СОДЕРЖИМОЕ:
+${repoStructure.readme ? repoStructure.readme.substring(0, 2000) : 'README файл не найден'}
+
+PACKAGE.JSON АНАЛИЗ:
+${repoStructure.packageJson ? `
+- Название: ${repoStructure.packageJson.name || 'Не указано'}
+- Описание: ${repoStructure.packageJson.description || 'Не указано'}
+- Версия: ${repoStructure.packageJson.version || 'Не указано'}
+- Скрипты: ${Object.keys(repoStructure.packageJson.scripts || {}).join(', ')}
+- Основные зависимости: ${Object.keys(repoStructure.packageJson.dependencies || {}).slice(0, 10).join(', ')}
+` : 'Package.json не найден'}
+
+КЛЮЧЕВЫЕ ФАЙЛЫ ПРОЕКТА:
+${repoStructure.mainFiles.map(file => `
+Файл: ${file.path} (${file.size} байт)
+Содержимое:
+${file.content}
+---
+`).join('\n')}
+
 ТЕХНИЧЕСКИЙ КОНТЕКСТ:
 Это система мониторинга GitHub репозиториев с интеграцией AI анализа.
 `;
 
     const prompt = `
-Проанализируй конкретный репозиторий "${repository.name}" и дай персонализированные рекомендации:
+Проанализируй конкретный репозиторий "${repository.name}" на основе его РЕАЛЬНОГО КОДА и структуры:
 
 ${projectContext}
 
-СПЕЦИФИЧНЫЙ АНАЛИЗ РЕПОЗИТОРИЯ:
-1. Учти статус репозитория: ${repository.status}
-2. Обрати внимание на активность: ${daysSinceLastCommit} дней с последнего коммита
-3. Проанализируй последние изменения: ${repository.changesSummary || "Данные недоступны"}
-4. Дай конкретные советы именно для репозитория "${repository.name}"
+ГЛУБОКИЙ АНАЛИЗ НА ОСНОВЕ КОДА:
+1. Изучи архитектуру проекта по файловой структуре и коду
+2. Проанализируй качество кода в представленных файлах
+3. Оцени технологический стек и его использование
+4. Рассмотри README и package.json для понимания назначения проекта
+5. Дай конкретные советы на основе РЕАЛЬНОГО кода
 
-РЕКОМЕНДАЦИИ ДОЛЖНЫ БЫТЬ:
-- Специфичными для репозитория "${repository.name}"
-- Учитывающими его текущий статус (${repository.status})
-- Практичными и выполнимыми
-- Нацеленными на улучшение активности и качества
+ОСОБОЕ ВНИМАНИЕ:
+- Статус репозитория: ${repository.status}
+- Активность: ${daysSinceLastCommit} дней с последнего коммита
+- Технологии: ${techStack.join(', ') || 'Анализируй из кода'}
+- Реальные файлы и их содержимое представлены выше
+
+КРИТЕРИИ АНАЛИЗА:
+- Анализируй НАСТОЯЩИЙ код, а не общие рекомендации
+- Учитывай специфику технологий, используемых в проекте
+- Давай конкретные советы по улучшению существующего кода
+- Находи реальные проблемы в архитектуре и коде
 
 Верни результат СТРОГО в JSON формате:
 {
   "codeQuality": {
-    "suggestions": ["конкретная рекомендация для ${repository.name}", "специфичная рекомендация по коду", "практический совет по улучшению"]
+    "suggestions": ["конкретная рекомендация на основе анализа кода ${repository.name}", "улучшение качества найденных файлов", "оптимизация существующих компонентов"]
   },
   "architecture": {
-    "suggestions": ["архитектурная рекомендация для ${repository.name}", "совет по структуре проекта", "предложение по организации кода"]
+    "suggestions": ["архитектурное улучшение на основе структуры ${repository.name}", "реорганизация найденных модулей", "улучшение существующей архитектуры"]
   },
   "userExperience": {
-    "suggestions": ["UX рекомендация для ${repository.name}", "совет по пользовательскому интерфейсу", "предложение по удобству использования"]
+    "suggestions": ["UX улучшение на основе анализа интерфейса ${repository.name}", "улучшение пользовательского опыта в найденных компонентах", "оптимизация взаимодействия"]
   },
   "performance": {
-    "suggestions": ["рекомендация по производительности для ${repository.name}", "совет по оптимизации", "предложение по ускорению"]
+    "suggestions": ["оптимизация производительности ${repository.name} на основе кода", "улучшение скорости загрузки найденных компонентов", "оптимизация существующих алгоритмов"]
   },
   "security": {
-    "suggestions": ["рекомендация по безопасности для ${repository.name}", "совет по защите данных", "предложение по безопасности кода"]
+    "suggestions": ["усиление безопасности ${repository.name} на основе найденного кода", "защита от уязвимостей в существующих файлах", "улучшение безопасности API"]
   },
-  "overallRecommendations": ["общая рекомендация для репозитория ${repository.name}", "стратегический совет", "долгосрочное предложение"]
+  "overallRecommendations": ["стратегическая рекомендация для развития ${repository.name}", "долгосрочный план улучшения проекта", "приоритетные направления развития"]
 }
 
 ОБЯЗАТЕЛЬНЫЕ ТРЕБОВАНИЯ:
-- Все рекомендации ТОЛЬКО на русском языке
-- Упоминай название репозитория "${repository.name}" в рекомендациях
-- Учитывай реальный статус и активность репозитория
-- Ответь ТОЛЬКО в JSON формате, без дополнительного текста
+- Рекомендации ТОЛЬКО на русском языке
+- Анализируй РЕАЛЬНЫЙ код, а не давай общие советы
+- Ссылайся на конкретные файлы и технологии из проекта
+- Ответь ТОЛЬКО в JSON формате без дополнительного текста
 `;
 
     try {
