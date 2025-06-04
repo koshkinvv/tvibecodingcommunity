@@ -6,8 +6,11 @@ export interface User {
   name: string | null;
   email: string | null;
   avatarUrl: string | null;
+  githubToken: string | null;
   telegramId: string | null;
-  notificationPreference: 'email' | 'telegram';
+  telegramUsername: string | null;
+  telegramConnected: boolean;
+  notificationPreference: 'email' | 'telegram' | 'none';
   onVacation: boolean;
   vacationUntil: string | null;
   isAdmin: boolean;

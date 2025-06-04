@@ -139,6 +139,7 @@ export default function ProfilePage() {
             <TabsList className="mb-4">
               <TabsTrigger value="repositories">Repositories</TabsTrigger>
               <TabsTrigger value="settings">Notification Settings</TabsTrigger>
+              <TabsTrigger value="telegram">Telegram</TabsTrigger>
               <TabsTrigger value="vacation">Vacation Mode</TabsTrigger>
             </TabsList>
             
@@ -150,6 +151,11 @@ export default function ProfilePage() {
             <TabsContent value="settings">
               <h3 className="text-lg font-medium text-gray-900 mb-4">Notification Settings</h3>
               <NotificationSettings user={user} />
+            </TabsContent>
+            
+            <TabsContent value="telegram">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Telegram Integration</h3>
+              <TelegramConnection user={user} />
             </TabsContent>
             
             <TabsContent value="vacation">
