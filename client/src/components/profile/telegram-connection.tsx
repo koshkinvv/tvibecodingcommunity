@@ -116,22 +116,48 @@ export function TelegramConnection({ user }: TelegramConnectionProps) {
       <CardContent className="space-y-4">
         {user.telegramConnected ? (
           <div className="space-y-4">
-            <Alert>
-              <CheckCircle className="h-4 w-4" />
-              <AlertDescription>
-                Telegram аккаунт подключен: @{user.telegramUsername}
+            <Alert className="bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800">
+              <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+              <AlertDescription className="text-green-800 dark:text-green-200">
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold">Аккаунт успешно привязан!</span>
+                  <span className="text-green-600 dark:text-green-400">@{user.telegramUsername}</span>
+                </div>
               </AlertDescription>
             </Alert>
             
-            <div className="text-sm text-muted-foreground">
-              <p className="mb-2">🎉 <strong>Вы подключены к боту сообщества!</strong></p>
-              <p className="mb-1">📢 Вы будете получать:</p>
-              <ul className="list-disc list-inside ml-4 space-y-1">
-                <li>Важные анонсы сообщества</li>
-                <li>Новые материалы и статьи</li>
-                <li>Приглашения на мероприятия</li>
-                <li>Возможность записаться на события</li>
-              </ul>
+            <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                  🎉
+                </div>
+                <h4 className="font-semibold text-blue-900 dark:text-blue-100">Вы подключены к боту сообщества!</h4>
+              </div>
+              
+              <div className="text-sm text-blue-800 dark:text-blue-200">
+                <p className="mb-2 flex items-center gap-2">
+                  <span className="w-5 h-5 flex items-center justify-center">📢</span>
+                  <span className="font-medium">Теперь вы будете получать:</span>
+                </p>
+                <ul className="list-none space-y-2 ml-7">
+                  <li className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
+                    Важные анонсы сообщества
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
+                    Новые материалы и статьи
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
+                    Приглашения на мероприятия
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
+                    Возможность записаться на события
+                  </li>
+                </ul>
+              </div>
             </div>
 
             <div className="flex gap-2">
@@ -157,10 +183,13 @@ export function TelegramConnection({ user }: TelegramConnectionProps) {
         ) : (
           <div className="space-y-4">
             {user.telegramUsername && !user.telegramConnected && (
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  Username сохранен, но аккаунт не подтвержден. Перейдите в бот и нажмите /start
+              <Alert className="bg-amber-50 border-amber-200 dark:bg-amber-950 dark:border-amber-800">
+                <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                <AlertDescription className="text-amber-800 dark:text-amber-200">
+                  <div className="space-y-1">
+                    <p className="font-semibold">Username сохранен, ожидается подтверждение</p>
+                    <p className="text-sm">Перейдите в бот @TVibeCoding_Bot и нажмите /start для завершения подключения</p>
+                  </div>
                 </AlertDescription>
               </Alert>
             )}
