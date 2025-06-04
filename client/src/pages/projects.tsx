@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Link } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -15,7 +17,10 @@ import {
   User,
   Trash2,
   Activity,
-  AlertCircle
+  AlertCircle,
+  Search,
+  ExternalLink,
+  Eye
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -231,11 +236,26 @@ const CommentSection = ({ repository }: { repository: Repository }) => {
 
 export default function ProjectsPage() {
   const { user } = useAuth();
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { data: projects, isLoading, error } = useQuery<Repository[]>({
     queryKey: ["/api/projects"],
     enabled: !!user,
   });
+
+  // Filter projects based on search query
+  const filteredProjects = useMemo(() => {
+    if (!projects || !searchQuery.trim()) return projects || [];
+    
+    const query = searchQuery.toLowerCase().trim();
+    return projects.filter(project => 
+      project.name.toLowerCase().includes(query) ||
+      project.fullName.toLowerCase().includes(query) ||
+      project.user.username.toLowerCase().includes(query) ||
+      (project.user.name && project.user.name.toLowerCase().includes(query)) ||
+      (project.description && project.description.toLowerCase().includes(query))
+    );
+  }, [projects, searchQuery]);
 
   if (!user) {
     return (
@@ -292,6 +312,17 @@ export default function ProjectsPage() {
           </p>
         </div>
 
+        {/* Search Bar */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input
+            placeholder="Поиск по названию проекта или пользователю..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+
         {projects && projects.length === 0 ? (
           <Card>
             <CardContent className="p-8 text-center">
@@ -302,9 +333,19 @@ export default function ProjectsPage() {
               </p>
             </CardContent>
           </Card>
+        ) : filteredProjects.length === 0 && searchQuery ? (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <Search className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Ничего не найдено</h3>
+              <p className="text-gray-600">
+                Попробуйте изменить поисковый запрос или очистить фильтры
+              </p>
+            </CardContent>
+          </Card>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {projects?.map((project) => (
+            {filteredProjects?.map((project) => (
               <Card key={project.id} className="h-fit">
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
@@ -355,6 +396,20 @@ export default function ProjectsPage() {
                         </span>
                       </div>
                     )}
+                  </div>
+
+                  {/* Action buttons */}
+                  <div className="flex items-center justify-between pt-2">
+                    <Link href={`/projects/${project.id}`}>
+                      <Button variant="outline" size="sm">
+                        <Eye className="h-3 w-3 mr-2" />
+                        Подробнее
+                      </Button>
+                    </Link>
+                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                      <MessageCircle className="h-4 w-4" />
+                      <span>{project.comments.length}</span>
+                    </div>
                   </div>
 
                   {/* Comments section */}
