@@ -771,6 +771,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         changesSummary: repository.changesSummary,
         isPublic: repository.isPublic,
         createdAt: repository.createdAt,
+        userId: repository.userId,
+        summaryGeneratedAt: repository.summaryGeneratedAt,
+        descriptionGeneratedAt: repository.descriptionGeneratedAt,
         user: {
           id: user.id,
           username: user.username,

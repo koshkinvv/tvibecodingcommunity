@@ -21,6 +21,9 @@ interface ProjectDetailData {
   changesSummary: string | null;
   isPublic: boolean;
   createdAt: string;
+  userId: number;
+  summaryGeneratedAt: string | null;
+  descriptionGeneratedAt: string | null;
   user: {
     id: number;
     username: string;
@@ -246,7 +249,7 @@ export default function ProjectDetailPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <CommentSection repository={project} />
+              <CommentSection repository={project as any} />
             </CardContent>
           </Card>
         </div>
