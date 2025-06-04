@@ -14,10 +14,49 @@ export class TelegramBot {
     }
     this.token = process.env.TELEGRAM_BOT_TOKEN;
     this.apiUrl = `https://api.telegram.org/bot${this.token}`;
+    console.log('[TELEGRAM] Bot initialized with token:', this.token.substring(0, 10) + '...');
+  }
+
+  async setWebhook(webhookUrl: string): Promise<boolean> {
+    try {
+      console.log('[TELEGRAM] Setting webhook URL:', webhookUrl);
+      
+      const response = await fetch(`${this.apiUrl}/setWebhook`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          url: webhookUrl
+        }),
+      });
+
+      const data = await response.json();
+      console.log('[TELEGRAM] Webhook setup response:', data);
+      
+      return data.ok;
+    } catch (error) {
+      console.error('[TELEGRAM] Error setting webhook:', error);
+      return false;
+    }
+  }
+
+  async getWebhookInfo(): Promise<any> {
+    try {
+      const response = await fetch(`${this.apiUrl}/getWebhookInfo`);
+      const data = await response.json();
+      console.log('[TELEGRAM] Webhook info:', data);
+      return data;
+    } catch (error) {
+      console.error('[TELEGRAM] Error getting webhook info:', error);
+      return null;
+    }
   }
 
   async sendMessage(chatId: string, text: string): Promise<boolean> {
     try {
+      console.log(`[TELEGRAM] Sending message to ${chatId}:`, text.substring(0, 100) + '...');
+      
       const response = await fetch(`${this.apiUrl}/sendMessage`, {
         method: 'POST',
         headers: {
@@ -31,34 +70,51 @@ export class TelegramBot {
       });
 
       const data = await response.json();
+      console.log(`[TELEGRAM] Response:`, data);
+      
+      if (!data.ok) {
+        console.error(`[TELEGRAM] Error sending message:`, data);
+      }
+      
       return data.ok;
     } catch (error) {
-      console.error('Error sending Telegram message:', error);
+      console.error('[TELEGRAM] Error sending message:', error);
       return false;
     }
   }
 
   async handleWebhook(update: any): Promise<void> {
     try {
+      console.log('[TELEGRAM] Received webhook update:', JSON.stringify(update, null, 2));
+      
       const message = update.message;
-      if (!message || !message.text) return;
+      if (!message || !message.text) {
+        console.log('[TELEGRAM] No message or text in update');
+        return;
+      }
 
       const chatId = message.chat.id.toString();
       const username = message.from.username;
       const text = message.text.trim();
 
-      console.log(`Telegram message from @${username} (${chatId}): ${text}`);
+      console.log(`[TELEGRAM] Message from @${username} (${chatId}): ${text}`);
 
       if (text === '/start') {
+        console.log('[TELEGRAM] Processing /start command');
         await this.handleStartCommand(chatId, username);
+      } else {
+        console.log('[TELEGRAM] Unknown command:', text);
       }
     } catch (error) {
-      console.error('Error handling Telegram webhook:', error);
+      console.error('[TELEGRAM] Error handling webhook:', error);
     }
   }
 
   private async handleStartCommand(chatId: string, username: string): Promise<void> {
+    console.log(`[TELEGRAM] handleStartCommand called with chatId: ${chatId}, username: ${username}`);
+    
     if (!username) {
+      console.log('[TELEGRAM] No username provided, sending error message');
       await this.sendMessage(chatId, 
         '❌ <b>Ошибка подключения</b>\n\n' +
         'Для подключения к Vibe Coding необходимо установить username в настройках Telegram.\n\n' +
@@ -68,8 +124,13 @@ export class TelegramBot {
     }
 
     // Ищем пользователя с таким telegram username
+    console.log('[TELEGRAM] Searching for user with username:', username);
     const users = await storage.getUsers();
+    console.log('[TELEGRAM] Found users count:', users.length);
+    console.log('[TELEGRAM] Users with telegram usernames:', users.filter(u => u.telegramUsername).map(u => u.telegramUsername));
+    
     const user = users.find(u => u.telegramUsername === username);
+    console.log('[TELEGRAM] Found user:', user ? `${user.username} (ID: ${user.id})` : 'null');
 
     if (!user) {
       await this.sendMessage(chatId,

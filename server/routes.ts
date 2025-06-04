@@ -949,6 +949,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin endpoints для настройки webhook
+  app.post("/api/telegram/setup-webhook", auth.isAdmin, async (req, res) => {
+    try {
+      if (!telegramBot) {
+        return res.status(503).json({ error: "Telegram bot not configured" });
+      }
+
+      const webhookUrl = `${req.protocol}://${req.get('host')}/api/telegram/webhook`;
+      const success = await telegramBot.setWebhook(webhookUrl);
+      
+      if (success) {
+        res.json({ success: true, webhookUrl });
+      } else {
+        res.status(500).json({ error: "Failed to set webhook" });
+      }
+    } catch (error) {
+      console.error("Error setting webhook:", error);
+      res.status(500).json({ error: "Failed to set webhook" });
+    }
+  });
+
+  app.get("/api/telegram/webhook-info", auth.isAdmin, async (req, res) => {
+    try {
+      if (!telegramBot) {
+        return res.status(503).json({ error: "Telegram bot not configured" });
+      }
+
+      const info = await telegramBot.getWebhookInfo();
+      res.json(info);
+    } catch (error) {
+      console.error("Error getting webhook info:", error);
+      res.status(500).json({ error: "Failed to get webhook info" });
+    }
+  });
+
   // Admin endpoints
   app.get("/api/admin/users", auth.isAdmin, async (req, res) => {
     try {
