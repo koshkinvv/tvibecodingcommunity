@@ -32,7 +32,7 @@ export function TelegramConnection({ user }: TelegramConnectionProps) {
 
   const connectMutation = useMutation({
     mutationFn: async (username: string) => {
-      return apiRequest('/api/telegram/connect', 'POST', { telegramUsername: username });
+      return apiRequest('POST', '/api/telegram/connect', { telegramUsername: username });
     },
     onSuccess: (data: any) => {
       toast({
@@ -63,7 +63,7 @@ export function TelegramConnection({ user }: TelegramConnectionProps) {
 
   const disconnectMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest('/api/telegram/disconnect', 'DELETE');
+      return apiRequest('DELETE', '/api/telegram/disconnect');
     },
     onSuccess: () => {
       toast({
