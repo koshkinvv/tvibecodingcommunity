@@ -731,6 +731,115 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get detailed project information by ID - requires authentication
+  app.get("/api/projects/:id", auth.isAuthenticated, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      if (isNaN(projectId)) {
+        return res.status(400).json({ error: "Invalid project ID" });
+      }
+
+      const repository = await storage.getRepository(projectId);
+      if (!repository) {
+        return res.status(404).json({ error: "Project not found" });
+      }
+
+      // Get repository owner information
+      const user = await storage.getUser(repository.userId);
+      if (!user) {
+        return res.status(404).json({ error: "Project owner not found" });
+      }
+
+      // Get comments for this repository
+      const comments = await storage.getRepositoryComments(projectId);
+
+      // Get activity feed for this repository - simplified version
+      const activityFeed = await storage.getActivityFeedByUser(repository.userId, 10);
+      const repositoryActivity = activityFeed.filter(activity => 
+        activity.repositoryId === projectId
+      );
+
+      // Format the response to match ProjectDetailData interface
+      const projectDetail = {
+        id: repository.id,
+        name: repository.name,
+        fullName: repository.fullName,
+        description: repository.description,
+        status: repository.status,
+        lastCommitDate: repository.lastCommitDate,
+        lastCommitSha: null, // Not stored in current schema
+        changesSummary: repository.changesSummary,
+        isPublic: repository.isPublic,
+        createdAt: repository.createdAt,
+        user: {
+          id: user.id,
+          username: user.username,
+          name: user.name,
+          avatarUrl: user.avatarUrl
+        },
+        comments: comments.map(comment => ({
+          id: comment.id,
+          content: comment.content,
+          createdAt: comment.createdAt,
+          user: {
+            id: comment.user.id,
+            username: comment.user.username,
+            name: comment.user.name,
+            avatarUrl: comment.user.avatarUrl
+          }
+        })),
+        activity: repositoryActivity.map(activity => ({
+          id: activity.id,
+          commitSha: activity.commitSha || "",
+          commitMessage: activity.commitMessage || "",
+          commitDate: activity.commitDate || activity.createdAt,
+          filesChanged: activity.filesChanged,
+          linesAdded: activity.linesAdded,
+          linesDeleted: activity.linesDeleted
+        }))
+      };
+
+      res.json(projectDetail);
+    } catch (error) {
+      console.error("Error fetching project details:", error);
+      res.status(500).json({ error: "Failed to fetch project details" });
+    }
+  });
+
+  // Add comment to project - requires authentication
+  app.post("/api/projects/:id/comments", auth.isAuthenticated, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      if (isNaN(projectId)) {
+        return res.status(400).json({ error: "Invalid project ID" });
+      }
+
+      const user = req.user as any;
+      const { content } = req.body;
+
+      if (!content || content.trim().length === 0) {
+        return res.status(400).json({ error: "Comment content is required" });
+      }
+
+      // Verify repository exists
+      const repository = await storage.getRepository(projectId);
+      if (!repository) {
+        return res.status(404).json({ error: "Project not found" });
+      }
+
+      const comment = await storage.createRepositoryComment({
+        repositoryId: projectId,
+        userId: user.id,
+        content: content.trim()
+      });
+
+      res.json(comment);
+    } catch (error) {
+      console.error("Error adding comment:", error);
+      res.status(500).json({ error: "Failed to add comment" });
+    }
+  });
+
   // Admin endpoints
   app.get("/api/admin/users", auth.isAdmin, async (req, res) => {
     try {

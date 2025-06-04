@@ -15,6 +15,7 @@ import ActivityPage from "@/pages/activity";
 import AdminPage from "@/pages/admin";
 import ProjectInsightsPage from "@/pages/project-insights";
 import ProjectsPage from "@/pages/projects";
+import ProjectDetailPage from "@/pages/project-detail";
 import ProgressPage from "@/pages/progress";
 import CommunityGuidelinesPage from "@/pages/community-guidelines";
 import PrivacyPolicyPage from "@/pages/privacy-policy";
@@ -47,6 +48,9 @@ function Router() {
       <Route path="/privacy" component={PrivacyPolicyPage} />
       <Route path="/projects">
         {user ? <ProjectsPage /> : <LoginPage />}
+      </Route>
+      <Route path="/projects/:id">
+        {user ? <ProjectDetailPage /> : <LoginPage />}
       </Route>
       <Route path="/activity" component={ActivityPage} />
       <Route path="/progress" component={ProgressPage} />
