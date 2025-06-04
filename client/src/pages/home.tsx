@@ -17,7 +17,7 @@ export default function HomePage() {
 
 
   // Fetch user's repositories to check if onboarding is needed
-  const { data: userRepositories, isLoading: repositoriesLoading } = useQuery({
+  const { data: userRepositories, isLoading: repositoriesLoading } = useQuery<any[]>({
     queryKey: [`/api/repositories/user/${user?.id}`],
     enabled: !!user,
   });
@@ -85,19 +85,7 @@ export default function HomePage() {
                           <div className="h-6 w-24 bg-gray-200 animate-pulse rounded"></div>
                         </div>
                       ) : stats?.viberOfTheWeek ? (
-                        <>
-                          <Avatar className="h-8 w-8 mr-2">
-                            <AvatarImage 
-                              src={stats.viberOfTheWeek.avatarUrl || ''} 
-                              alt={stats.viberOfTheWeek.username} 
-                            />
-                            <AvatarFallback>
-                              {stats.viberOfTheWeek.name?.substring(0, 2) || 
-                                stats.viberOfTheWeek.username.substring(0, 2)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span>{stats.viberOfTheWeek.name || stats.viberOfTheWeek.username}</span>
-                        </>
+                        <span>{stats.viberOfTheWeek.name || stats.viberOfTheWeek.username}</span>
                       ) : (
                         <span className="text-gray-500">Нет вайбера на этой неделе</span>
                       )}
@@ -131,7 +119,7 @@ export default function HomePage() {
             </div>
 
             {/* Onboarding Section - show for users without repositories */}
-            {user && !repositoriesLoading && userRepositories && userRepositories.length === 0 && (
+            {user && !repositoriesLoading && userRepositories && Array.isArray(userRepositories) && userRepositories.length === 0 && (
               <div className="mt-8 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6 shadow-sm">
                 <div className="flex items-start space-x-4">
                   <div className="flex-shrink-0">
@@ -183,7 +171,7 @@ export default function HomePage() {
             )}
 
             {/* Tips Section - show for users with repositories */}
-            {user && !repositoriesLoading && userRepositories && userRepositories.length > 0 && (
+            {user && !repositoriesLoading && userRepositories && Array.isArray(userRepositories) && userRepositories.length > 0 && (
               <div className="mt-8 bg-green-50 border border-green-200 rounded-lg p-6">
                 <div className="flex items-center space-x-3 mb-4">
                   <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
