@@ -186,6 +186,12 @@ export function TelegramConnection({ user }: TelegramConnectionProps) {
                 <li>Перейдите в бот @TVibeCoding_Bot</li>
                 <li>Нажмите /start для подтверждения</li>
               </ol>
+              <div className="mt-3 p-2 bg-amber-50 border border-amber-200 rounded">
+                <p className="text-amber-800 text-xs">
+                  <strong>Важно:</strong> Username должен точно совпадать с тем, что указан в настройках вашего Telegram аккаунта. 
+                  Если бот не найдет ваш username, проверьте правильность написания и попробуйте снова.
+                </p>
+              </div>
             </div>
           </div>
         )}
