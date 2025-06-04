@@ -6,6 +6,7 @@ import { githubClient } from "./github";
 import { scheduler } from "./scheduler";
 import { projectAnalyzer } from "./project-analyzer";
 import { geminiService } from "./gemini";
+import { telegramBot } from "./telegram-bot";
 import { z } from "zod";
 import { insertRepositorySchema } from "@shared/schema";
 
@@ -850,6 +851,101 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error adding comment:", error);
       res.status(500).json({ error: "Failed to add comment" });
+    }
+  });
+
+  // Telegram integration endpoints
+  app.post("/api/telegram/connect", auth.isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const { telegramUsername } = req.body;
+
+      if (!telegramUsername || typeof telegramUsername !== 'string') {
+        return res.status(400).json({ error: "Telegram username is required" });
+      }
+
+      // Очищаем username от символа @
+      const cleanUsername = telegramUsername.replace('@', '').trim();
+
+      if (cleanUsername.length < 3) {
+        return res.status(400).json({ error: "Telegram username must be at least 3 characters long" });
+      }
+
+      // Проверяем, не используется ли уже этот username другим пользователем
+      const users = await storage.getUsers();
+      const existingUser = users.find(u => u.telegramUsername === cleanUsername && u.id !== user.id);
+      
+      if (existingUser) {
+        return res.status(400).json({ error: "This Telegram username is already connected to another account" });
+      }
+
+      // Обновляем пользователя
+      await storage.updateUser(user.id, {
+        telegramUsername: cleanUsername,
+        telegramConnected: false // Будет установлено в true когда пользователь напишет /start боту
+      });
+
+      res.json({ 
+        success: true, 
+        message: "Telegram username saved. Now go to @TVibeCoding_Bot and press /start",
+        botLink: "https://t.me/TVibeCoding_Bot"
+      });
+    } catch (error) {
+      console.error("Error connecting Telegram:", error);
+      res.status(500).json({ error: "Failed to connect Telegram account" });
+    }
+  });
+
+  app.delete("/api/telegram/disconnect", auth.isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as any;
+
+      await storage.updateUser(user.id, {
+        telegramUsername: null,
+        telegramId: null,
+        telegramConnected: false
+      });
+
+      res.json({ success: true, message: "Telegram account disconnected" });
+    } catch (error) {
+      console.error("Error disconnecting Telegram:", error);
+      res.status(500).json({ error: "Failed to disconnect Telegram account" });
+    }
+  });
+
+  // Webhook для Telegram бота
+  app.post("/api/telegram/webhook", async (req, res) => {
+    try {
+      if (!telegramBot) {
+        return res.status(503).json({ error: "Telegram bot not configured" });
+      }
+
+      await telegramBot.handleWebhook(req.body);
+      res.json({ ok: true });
+    } catch (error) {
+      console.error("Error handling Telegram webhook:", error);
+      res.status(500).json({ error: "Webhook processing failed" });
+    }
+  });
+
+  // Admin endpoint для отправки анонсов
+  app.post("/api/telegram/announcement", auth.isAdmin, async (req, res) => {
+    try {
+      if (!telegramBot) {
+        return res.status(503).json({ error: "Telegram bot not configured" });
+      }
+
+      const { message, userIds } = req.body;
+
+      if (!message || typeof message !== 'string') {
+        return res.status(400).json({ error: "Message is required" });
+      }
+
+      await telegramBot.sendCommunityAnnouncement(message, userIds);
+      res.json({ success: true, message: "Announcement sent" });
+    } catch (error) {
+      console.error("Error sending announcement:", error);
+      res.status(500).json({ error: "Failed to send announcement" });
     }
   });
 

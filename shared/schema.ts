@@ -13,6 +13,8 @@ export const users = pgTable("users", {
   avatarUrl: text("avatar_url"),
   githubToken: text("github_token"), // Encrypted GitHub access token
   telegramId: text("telegram_id"),
+  telegramUsername: text("telegram_username"),
+  telegramConnected: boolean("telegram_connected").default(false),
   notificationPreference: text("notification_preference").default("email"),
   onVacation: boolean("on_vacation").default(false),
   vacationUntil: timestamp("vacation_until"),

@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RepositoryList } from '@/components/repository-list';
 import { NotificationSettings } from '@/components/profile/notification-settings';
 import { VacationMode } from '@/components/profile/vacation-mode';
+import { TelegramConnection } from '@/components/profile/telegram-connection';
 import { ProfileData } from '@/lib/types';
 import { Umbrella } from 'lucide-react';
 
