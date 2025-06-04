@@ -19,6 +19,17 @@ export function TelegramConnection({ user }: TelegramConnectionProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Проверяем что пользователь авторизован
+  if (!user) {
+    return (
+      <Card>
+        <CardContent className="p-6 text-center">
+          <p className="text-muted-foreground">Требуется авторизация для подключения Telegram</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   const connectMutation = useMutation({
     mutationFn: async (username: string) => {
       return apiRequest('/api/telegram/connect', 'POST', { telegramUsername: username });
@@ -31,9 +42,20 @@ export function TelegramConnection({ user }: TelegramConnectionProps) {
       queryClient.invalidateQueries({ queryKey: ['/api/profile'] });
     },
     onError: (error: any) => {
+      console.error('Telegram connection error:', error);
+      let errorMessage = "Не удалось подключить Telegram аккаунт";
+      
+      if (error.status === 401) {
+        errorMessage = "Требуется авторизация. Пожалуйста, войдите в систему";
+      } else if (error.status === 400) {
+        errorMessage = error.message || "Неверные данные";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
-        title: "Ошибка",
-        description: error.message || "Не удалось подключить Telegram аккаунт",
+        title: "Ошибка подключения",
+        description: errorMessage,
         variant: "destructive"
       });
     }
