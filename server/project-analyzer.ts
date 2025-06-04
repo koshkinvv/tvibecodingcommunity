@@ -99,17 +99,31 @@ ${projectContext}
 `;
 
     try {
+      console.log(`Начинаю анализ репозитория: ${repository.name}`);
+      
       const result = await this.model.generateContent(prompt);
       const response = result.response;
       const text = response.text();
       
+      console.log(`Получен ответ от AI для репозитория: ${repository.name}`);
+      
       // Очищаем ответ от лишних символов
       const cleanedText = text.replace(/```json|```/g, '').trim();
       
-      const analysis = JSON.parse(cleanedText);
-      return analysis;
+      try {
+        const analysis = JSON.parse(cleanedText);
+        console.log(`Анализ репозитория ${repository.name} успешно завершен`);
+        return analysis;
+      } catch (parseError) {
+        console.error('Ошибка парсинга JSON ответа:', parseError);
+        console.log('Сырой ответ:', text);
+        throw new Error('Ошибка обработки ответа AI');
+      }
     } catch (error) {
       console.error('Ошибка анализа конкретного репозитория:', error);
+      if (error instanceof Error && error.message.includes('API key')) {
+        throw new Error('Проблема с API ключом Gemini. Проверьте настройки.');
+      }
       throw new Error('Не удалось выполнить анализ репозитория');
     }
   }

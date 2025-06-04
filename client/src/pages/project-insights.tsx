@@ -93,6 +93,7 @@ export default function ProjectInsightsPage() {
     
     setIsLoading(true);
     setError(null);
+    setAnalysis(null);
     
     try {
       const response = await fetch(`/api/project/analysis?repositoryId=${selectedRepository}`, {
@@ -101,13 +102,15 @@ export default function ProjectInsightsPage() {
       });
       
       if (!response.ok) {
-        throw new Error("Ошибка при анализе проекта");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Ошибка ${response.status}: ${response.statusText}`);
       }
       
       const data = await response.json();
       setAnalysis(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Произошла ошибка");
+      console.error('Ошибка анализа проекта:', err);
+      setError(err instanceof Error ? err.message : "Произошла ошибка при анализе проекта");
     } finally {
       setIsLoading(false);
     }
