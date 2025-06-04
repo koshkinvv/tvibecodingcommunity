@@ -1,4 +1,4 @@
-const https = require('https');
+import https from 'https';
 
 const token = process.env.TELEGRAM_BOT_TOKEN;
 const webhookUrl = 'https://vibe-code-tracker.replit.app/api/telegram/webhook';
