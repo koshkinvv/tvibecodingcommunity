@@ -110,6 +110,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       });
       
+      // Calculate total commits from all user progress
+      let totalCommits = 0;
+      for (const user of users) {
+        const progress = await storage.getUserProgress(user.id);
+        if (progress) {
+          totalCommits += progress.totalCommits || 0;
+        }
+      }
+      
       // Get current viber of the week
       const viber = await storage.getCurrentViber();
       
@@ -118,6 +127,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         totalMembers: users.length,
         activeMembers: activeMembers.size,
         totalRepositories: repositories.length,
+        totalCommits: totalCommits,
         viberOfTheWeek: viber ? {
           id: viber.id,
           username: viber.username,

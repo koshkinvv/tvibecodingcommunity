@@ -64,6 +64,7 @@ export interface UserStats {
   totalMembers: number;
   activeMembers: number;
   totalRepositories: number;
+  totalCommits: number;
   viberOfTheWeek: {
     id: number;
     username: string;
