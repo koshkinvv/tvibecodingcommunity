@@ -5,11 +5,17 @@ import { storage } from './storage';
 import { githubUserSchema } from '@shared/schema';
 import express from 'express';
 import session from 'express-session';
-import MemoryStore from 'memorystore';
+import connectPgSimple from 'connect-pg-simple';
+import { Pool } from '@neondatabase/serverless';
 
 // Setup GitHub OAuth strategy
 export function setupAuth(app: express.Express) {
-  const MemoryStoreSession = MemoryStore(session);
+  const PgSession = connectPgSimple(session);
+  
+  // Create PostgreSQL connection pool for sessions
+  const sessionPool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+  });
   
   // Configure passport with GitHub strategy
   // Match the URL configured in GitHub OAuth settings as seen in the screenshot
@@ -123,8 +129,10 @@ export function setupAuth(app: express.Express) {
       httpOnly: true,
       maxAge: 7 * 24 * 60 * 60 * 1000 // 1 week
     },
-    store: new MemoryStoreSession({
-      checkPeriod: 86400000 // prune expired entries every 24h
+    store: new PgSession({
+      pool: sessionPool,
+      tableName: 'session',
+      createTableIfMissing: true
     })
   }));
   
