@@ -101,16 +101,25 @@ export function setupAuth(app: express.Express) {
     done(null, user.id);
   });
   
-  // Deserialize user from session
+  // Deserialize user from session with caching
+  const userCache = new Map<number, { user: any; timestamp: number }>();
+  const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+  
   passport.deserializeUser(async (id: number, done) => {
     try {
-      console.log('Deserializing user with ID:', id);
+      // Check cache first
+      const cached = userCache.get(id);
+      if (cached && (Date.now() - cached.timestamp) < CACHE_TTL) {
+        return done(null, cached.user);
+      }
+      
       const user = await storage.getUser(id);
       if (user) {
-        console.log('User found:', user.username);
+        // Cache the user
+        userCache.set(id, { user, timestamp: Date.now() });
         done(null, user);
       } else {
-        console.log('User not found for ID:', id);
+        userCache.delete(id);
         done(null, false);
       }
     } catch (error) {
@@ -119,20 +128,26 @@ export function setupAuth(app: express.Express) {
     }
   });
   
-  // Set up session middleware
+  // Set up session middleware with better configuration
   app.use(session({
     secret: process.env.SESSION_SECRET || 'vibecoding-secret',
     resave: false,
     saveUninitialized: false,
+    rolling: true, // Reset expiration on activity
     cookie: { 
-      secure: false, // Temporarily disable for debugging
+      secure: false,
       httpOnly: true,
-      maxAge: 7 * 24 * 60 * 60 * 1000 // 1 week
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours (shorter for better security)
+      sameSite: 'lax'
     },
     store: new PgSession({
       pool: sessionPool,
       tableName: 'session',
-      createTableIfMissing: true
+      createTableIfMissing: true,
+      pruneSessionInterval: 60 * 15, // Clean up expired sessions every 15 minutes
+      errorLog: (error) => {
+        console.error('Session store error:', error);
+      }
     })
   }));
   

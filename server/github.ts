@@ -1,15 +1,34 @@
 import fetch from 'node-fetch';
 import { Repository } from '@shared/schema';
 
-// GitHub API client for getting repository information
+// GitHub API client with rate limiting and error handling
 export class GitHubClient {
   private baseUrl = 'https://api.github.com';
   private userAgent = 'VibeCoding-App/1.0.0';
+  private requestCount = 0;
+  private lastResetTime = Date.now();
+  private maxRequestsPerHour = 5000; // GitHub API limit
 
   constructor(private token?: string) {}
 
   setToken(token: string) {
     this.token = token;
+  }
+
+  private checkRateLimit() {
+    const now = Date.now();
+    const hoursSinceReset = (now - this.lastResetTime) / (1000 * 60 * 60);
+    
+    if (hoursSinceReset >= 1) {
+      this.requestCount = 0;
+      this.lastResetTime = now;
+    }
+    
+    if (this.requestCount >= this.maxRequestsPerHour) {
+      throw new Error('GitHub API rate limit exceeded. Please try again later.');
+    }
+    
+    this.requestCount++;
   }
 
   private getHeaders() {
@@ -30,15 +49,30 @@ export class GitHubClient {
       throw new Error('Authentication token required');
     }
     
-    const response = await fetch(`${this.baseUrl}/user`, {
-      headers: this.getHeaders()
-    });
+    this.checkRateLimit();
     
-    if (!response.ok) {
-      throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
+    try {
+      const response = await fetch(`${this.baseUrl}/user`, {
+        headers: this.getHeaders()
+      });
+      
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('GitHub token is invalid or expired. Please re-authenticate.');
+        }
+        if (response.status === 403) {
+          throw new Error('GitHub API rate limit exceeded or insufficient permissions.');
+        }
+        throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
+      }
+      
+      return response.json();
+    } catch (error) {
+      if (error.name === 'FetchError' && error.code === 'ETIMEDOUT') {
+        throw new Error('GitHub API request timed out. Please try again.');
+      }
+      throw error;
     }
-    
-    return response.json();
   }
 
   async getUserRepositories() {
@@ -46,23 +80,38 @@ export class GitHubClient {
       throw new Error('Authentication token required');
     }
     
-    const response = await fetch(`${this.baseUrl}/user/repos?sort=updated&per_page=100`, {
-      headers: this.getHeaders()
-    });
+    this.checkRateLimit();
     
-    if (!response.ok) {
-      throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
+    try {
+      const response = await fetch(`${this.baseUrl}/user/repos?sort=updated&per_page=100`, {
+        headers: this.getHeaders()
+      });
+      
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('GitHub token is invalid or expired. Please re-authenticate.');
+        }
+        if (response.status === 403) {
+          throw new Error('GitHub API rate limit exceeded or insufficient permissions.');
+        }
+        throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
+      }
+      
+      const repos = await response.json() as any[];
+      return repos.map((repo: any) => ({
+        id: repo.id,
+        name: repo.name,
+        fullName: repo.full_name,
+        description: repo.description,
+        private: repo.private,
+        updatedAt: repo.updated_at
+      }));
+    } catch (error) {
+      if (error.name === 'FetchError' && error.code === 'ETIMEDOUT') {
+        throw new Error('GitHub API request timed out. Please try again.');
+      }
+      throw error;
     }
-    
-    const repos = await response.json();
-    return repos.map((repo: any) => ({
-      id: repo.id,
-      name: repo.name,
-      fullName: repo.full_name,
-      description: repo.description,
-      private: repo.private,
-      updatedAt: repo.updated_at
-    }));
   }
 
   async getRepository(owner: string, repo: string) {
