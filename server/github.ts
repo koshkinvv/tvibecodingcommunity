@@ -206,7 +206,7 @@ export class GitHubClient {
             break;
           }
           
-          const pageCommits = await pageResponse.json();
+          const pageCommits = await pageResponse.json() as any[];
           if (!pageCommits || pageCommits.length === 0) {
             break;
           }
@@ -221,7 +221,7 @@ export class GitHubClient {
           page++;
         }
         
-        return allCommits;
+        return allCommits as any[];
       }
     } catch (error) {
       console.error(`Error fetching commits for ${fullName}:`, error);
@@ -251,7 +251,7 @@ export class GitHubClient {
         throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
       }
       
-      return await response.json();
+      return await response.json() as any[];
     } catch (error) {
       console.error(`Error fetching contents for ${fullName}/${path}:`, error);
       throw error;
@@ -268,7 +268,7 @@ export class GitHubClient {
         return null;
       }
       
-      const data = await response.json();
+      const data = await response.json() as any;
       if (data.type === 'file' && data.content) {
         // GitHub returns base64 encoded content
         return Buffer.from(data.content, 'base64').toString('utf-8');

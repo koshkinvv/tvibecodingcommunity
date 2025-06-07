@@ -9,6 +9,7 @@ import { geminiService } from "./gemini";
 import { telegramBot } from "./telegram-bot";
 import { z } from "zod";
 import { insertRepositorySchema } from "@shared/schema";
+import { errorHandler, asyncHandler } from "./middleware/errorHandler";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize auth middleware
