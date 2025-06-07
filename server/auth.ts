@@ -33,7 +33,7 @@ export function setupAuth(app: express.Express) {
     clientSecret: process.env.GITHUB_CLIENT_SECRET || 'mock_client_secret',
     callbackURL: callbackURL,
     scope: ['user:email', 'read:user', 'repo']
-  }, async (accessToken, refreshToken, profile, done) => {
+  }, async (accessToken: any, refreshToken: any, profile: any, done: any) => {
     console.log('GitHub OAuth callback received');
     console.log('Profile:', profile.username);
     try {

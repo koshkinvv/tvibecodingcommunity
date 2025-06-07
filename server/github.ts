@@ -127,16 +127,34 @@ export class GitHubClient {
   }
 
   async getLatestCommit(fullName: string) {
-    const response = await fetch(`${this.baseUrl}/repos/${fullName}/commits?per_page=1`, {
-      headers: this.getHeaders()
-    });
+    this.checkRateLimit();
     
-    if (!response.ok) {
-      throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
+    try {
+      const response = await fetch(`${this.baseUrl}/repos/${fullName}/commits?per_page=1`, {
+        headers: this.getHeaders()
+      });
+      
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('GitHub token is invalid or expired. Please re-authenticate.');
+        }
+        if (response.status === 403) {
+          throw new Error('GitHub API rate limit exceeded or insufficient permissions.');
+        }
+        if (response.status === 404) {
+          throw new Error(`Repository ${fullName} not found or not accessible.`);
+        }
+        throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
+      }
+      
+      const commits = await response.json() as any[];
+      return commits.length > 0 ? commits[0] : null;
+    } catch (error: any) {
+      if (error.message.includes('GitHub')) {
+        throw error; // Re-throw GitHub-specific errors
+      }
+      throw new Error(`Failed to fetch latest commit for ${fullName}: ${error.message}`);
     }
-    
-    const commits = await response.json();
-    return commits.length > 0 ? commits[0] : null;
   }
 
   async getCommitsSince(fullName: string, sinceCommitSha?: string): Promise<any[]> {
@@ -151,7 +169,7 @@ export class GitHubClient {
         const params = new URLSearchParams();
         
         if (sinceCommitResponse.ok) {
-          const sinceCommit = await sinceCommitResponse.json();
+          const sinceCommit = await sinceCommitResponse.json() as any;
           params.append('since', sinceCommit.commit.author.date);
         }
         
@@ -167,7 +185,7 @@ export class GitHubClient {
           throw new Error(`Failed to fetch commits: ${response.status}`);
         }
 
-        const commits = await response.json();
+        const commits = await response.json() as any[];
         
         // Фильтруем коммиты, исключая sinceCommitSha если он есть
         const filteredCommits = commits.filter((commit: any) => commit.sha !== sinceCommitSha);
