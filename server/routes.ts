@@ -728,6 +728,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      // Sort leaderboard by level (descending), then by experience (descending)
+      leaderboard.sort((a, b) => {
+        if (a.progress.level !== b.progress.level) {
+          return b.progress.level - a.progress.level;
+        }
+        return b.progress.experience - a.progress.experience;
+      });
+
       res.json(leaderboard);
     } catch (error) {
       console.error("Error fetching leaderboard:", error);
