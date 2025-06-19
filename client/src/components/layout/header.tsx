@@ -276,18 +276,9 @@ export function Header() {
           <MobileNavLink href="/guidelines" icon={BookOpen}>Правила</MobileNavLink>
           <button
             onClick={() => {
-              console.log('Help button clicked');
-              try {
-                resetOnboarding();
-                console.log('Onboarding reset completed');
-                setTimeout(() => {
-                  console.log('Starting onboarding');
-                  startOnboarding();
-                }, 100);
-                setMobileMenuOpen(false);
-              } catch (error) {
-                console.error('Error in help button:', error);
-              }
+              resetOnboarding();
+              setTimeout(startOnboarding, 100);
+              setMobileMenuOpen(false);
             }}
             className="relative flex items-center gap-3 pl-4 pr-4 py-4 border-l-4 border-transparent text-base font-medium text-gray-700 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset min-h-[56px] w-full text-left"
           >

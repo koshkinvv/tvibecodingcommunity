@@ -122,6 +122,7 @@ export const useOnboarding = () => {
   const startOnboarding = () => {
     setCurrentStep(0);
     setIsActive(true);
+    sessionStorage.setItem('onboarding-in-progress', 'true');
   };
 
   const nextStep = () => {
