@@ -95,26 +95,101 @@ export default function HomePage() {
               </Card>
             </div>
 
+            {/* How to Join Section */}
+            <div className="mt-8 bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200 rounded-lg p-6">
+              <h3 className="text-xl font-semibold text-indigo-900 mb-4">Как попасть в проект и показать свои коммиты?</h3>
+              
+              <div className="space-y-6">
+                <div className="bg-white rounded-lg p-5 border border-indigo-100">
+                  <div className="flex items-start space-x-4">
+                    <div className="flex-shrink-0 w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
+                      <span className="text-indigo-700 font-semibold text-sm">1</span>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-gray-900 mb-2">Войдите через GitHub</h4>
+                      <p className="text-gray-700 text-sm mb-3">
+                        Авторизуйтесь на платформе с помощью вашего GitHub аккаунта. Это даст системе доступ к информации о ваших репозиториях.
+                      </p>
+                      {!user && (
+                        <Link href="/login">
+                          <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700">
+                            Войти через GitHub
+                          </Button>
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-lg p-5 border border-indigo-100">
+                  <div className="flex items-start space-x-4">
+                    <div className="flex-shrink-0 w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
+                      <span className="text-indigo-700 font-semibold text-sm">2</span>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-gray-900 mb-2">Добавьте свои репозитории</h4>
+                      <p className="text-gray-700 text-sm mb-3">
+                        Перейдите в свой профиль и добавьте GitHub репозитории, которые хотите отслеживать. 
+                        Система поддерживает как публичные, так и приватные репозитории.
+                      </p>
+                      {user && (
+                        <Link href="/profile">
+                          <Button size="sm" variant="outline" className="border-indigo-300 text-indigo-700 hover:bg-indigo-50">
+                            Перейти в профиль
+                          </Button>
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-lg p-5 border border-indigo-100">
+                  <div className="flex items-start space-x-4">
+                    <div className="flex-shrink-0 w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
+                      <span className="text-indigo-700 font-semibold text-sm">3</span>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-gray-900 mb-2">Начните делать коммиты</h4>
+                      <p className="text-gray-700 text-sm mb-3">
+                        Система автоматически отслеживает ваши коммиты в подключенных репозиториях. 
+                        Каждый коммит приносит 10 XP и отображается в <Link href="/activity" className="text-indigo-600 hover:text-indigo-800 underline">ленте активности</Link>.
+                      </p>
+                      <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-md">
+                        <p className="text-sm text-green-800">
+                          <strong>Совет:</strong> Делайте коммиты регулярно, чтобы поддерживать серию активности и подниматься в рейтинге!
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-lg p-5 border border-indigo-100">
+                  <div className="flex items-start space-x-4">
+                    <div className="flex-shrink-0 w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
+                      <span className="text-indigo-700 font-semibold text-sm">4</span>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-gray-900 mb-2">Отслеживайте прогресс</h4>
+                      <p className="text-gray-700 text-sm mb-3">
+                        Проверяйте свою статистику, уровень и место в рейтинге на странице прогресса. 
+                        Система обновляет данные ежедневно и отправляет уведомления о неактивности.
+                      </p>
+                      <Link href="/progress">
+                        <Button size="sm" variant="outline" className="border-indigo-300 text-indigo-700 hover:bg-indigo-50">
+                          Посмотреть прогресс
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* About Section */}
-            <div className="mt-6">
+            <div className="mt-8">
               <h3 className="text-lg font-medium text-gray-900">О сообществе Vibe Coding</h3>
               <div className="mt-2 text-sm text-gray-500">
                 <p>Vibe Coding — это сообщество, где участники обязуются поддерживать постоянную практику программирования. Мы отслеживаем активность через коммиты GitHub, обеспечивая активность каждого участника через вклад в свои проекты минимум раз в две недели.</p>
-                <div className="mt-4">
-                  {!user ? (
-                    <Link href="/login">
-                      <Button>
-                        Присоединиться к сообществу
-                      </Button>
-                    </Link>
-                  ) : (
-                    <Link href="/profile">
-                      <Button>
-                        Перейти в профиль
-                      </Button>
-                    </Link>
-                  )}
-                </div>
               </div>
             </div>
 
